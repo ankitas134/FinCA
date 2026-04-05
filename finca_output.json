@@ -1,0 +1,24 @@
+{
+  "name": "A",
+  "age": 26,
+  "monthly_income": 77000.0,
+  "total_expenses": 48300,
+  "surplus": 28700,
+  "investable": 22960,
+  "years_to_retire": 34,
+  "monthly_sip": 22960,
+  "weighted_return_pct": 13.68,
+  "corpus_worst": 191964494,
+  "corpus_likely": 205897636,
+  "corpus_best": 221009113,
+  "inflation_adjusted": 39718780,
+  "goal": 50000000.0,
+  "gap": 0,
+  "allocation": {
+    "equity": 30,
+    "gold": 15,
+    "fd": 25,
+    "debt_mf": 20,
+    "health_insurance": 10
+  }
+}
