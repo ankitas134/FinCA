@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinCA — Personal Investment Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c18;--surface:#0f1623;--surface2:#162033;--border:#1c2a40;--border2:#243550;--gold:#e8a000;--gold-light:#f5b730;--teal:#00c4a0;--blue:#4a90e2;--red:#e05555;--text:#dde3f0;--text-mid:#8a9ab8;--text-dim:#4a5a78;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;}
+.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:0.25;}
+.page{display:none;min-height:100vh;position:relative;z-index:1;}
+.page.active{display:block;animation:fadeIn 0.4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(8,12,24,0.92);backdrop-filter:blur(12px);padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-0.5px;cursor:pointer;}
+.nav-logo span{color:var(--gold);}
+.nav-steps{display:flex;gap:6px;}
+.nav-step{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);padding:6px 14px;border-radius:20px;border:1px solid transparent;cursor:default;transition:all 0.2s;}
+.nav-step.done{color:var(--teal);border-color:var(--teal);cursor:pointer;}
+.nav-step.active{color:var(--gold);border-color:var(--gold);}
+.wrap{max-width:860px;margin:0 auto;padding:100px 32px 60px;}
+.wrap-sm{max-width:640px;margin:0 auto;padding:100px 32px 60px;}
+.hero{padding:60px 0 40px;}
+.hero-tag{font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+.hero-tag::before{content:'';width:32px;height:1px;background:var(--gold);}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.4rem,6vw,4rem);line-height:1.1;margin-bottom:24px;}
+.hero-title em{color:var(--gold);font-style:normal;}
+.hero-sub{font-size:0.88rem;color:var(--text-mid);line-height:1.8;max-width:520px;margin-bottom:48px;}
+.btn-primary{background:var(--gold);color:#000;border:none;padding:14px 36px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.04em;border-radius:6px;cursor:pointer;transition:background 0.15s,transform 0.15s;}
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-1px);}
+.btn-secondary{background:transparent;color:var(--text-mid);border:1px solid var(--border2);padding:14px 36px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.9rem;border-radius:6px;cursor:pointer;transition:border-color 0.15s,color 0.15s;margin-left:12px;}
+.btn-secondary:hover{border-color:var(--text-mid);color:var(--text);}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;}
+.feature{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 22px;transition:border-color 0.2s;}
+.feature:hover{border-color:var(--border2);}
+.feature-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;margin-bottom:8px;}
+.feature-desc{font-size:0.75rem;color:var(--text-mid);line-height:1.7;}
+.data-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:48px;}
+.data-item{background:var(--surface);padding:24px 20px;}
+.data-num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--gold);}
+.data-label{font-size:0.7rem;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;}
+.progress-bar{width:100%;height:3px;background:var(--border);border-radius:2px;margin-bottom:40px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.5s ease;}
+.form-header{margin-bottom:40px;}
+.form-page-tag{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+.form-page-title{font-family:'DM Serif Display',serif;font-size:2rem;line-height:1.2;margin-bottom:8px;}
+.form-page-sub{font-size:0.8rem;color:var(--text-mid);}
+.field-group{margin-bottom:20px;}
+.field-label{display:block;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);margin-bottom:8px;}
+.field-hint{font-size:0.7rem;color:var(--text-dim);margin-top:6px;}
+input[type=text],input[type=number],select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:13px 16px;font-family:'DM Mono',monospace;font-size:0.88rem;border-radius:8px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,160,0,0.12);}
+select option{background:var(--surface2);}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.radio-group{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.radio-option{border:1px solid var(--border);border-radius:8px;padding:16px 14px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.radio-option:hover{border-color:var(--border2);}
+.radio-option.selected{border-color:var(--gold);background:rgba(232,160,0,0.07);}
+.radio-option input{display:none;}
+.radio-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;margin-bottom:4px;}
+.radio-desc{font-size:0.68rem;color:var(--text-dim);}
+.form-nav{display:flex;justify-content:space-between;align-items:center;margin-top:36px;}
+.back-btn{background:none;border:none;color:var(--text-mid);font-family:'DM Mono',monospace;font-size:0.8rem;cursor:pointer;transition:color 0.15s;}
+.back-btn:hover{color:var(--text);}
+.loan-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;}
+.loan-remove{background:none;border:1px solid var(--border);color:var(--text-dim);width:36px;height:36px;border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.loan-remove:hover{border-color:var(--red);color:var(--red);}
+.add-btn{background:none;border:1px dashed var(--border2);color:var(--text-mid);width:100%;padding:12px;border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.78rem;letter-spacing:0.05em;transition:all 0.15s;}
+.add-btn:hover{border-color:var(--gold);color:var(--gold);}
+.results-header{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;margin-bottom:20px;}
+.results-name{font-family:'DM Serif Display',serif;font-size:1.9rem;margin-bottom:6px;}
+.results-meta{font-size:0.75rem;color:var(--text-mid);line-height:1.8;}
+.section-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 18px;transition:border-color 0.2s;}
+.kpi.accent{border-color:var(--teal);}
+.kpi-label{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;}
+.kpi-val.gold{color:var(--gold);}
+.kpi-val.teal{color:var(--teal);}
+.kpi-sub{font-size:0.68rem;color:var(--text-dim);margin-top:5px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:16px;}
+.bar-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.bar-lbl{width:120px;font-size:0.7rem;color:var(--text-mid);flex-shrink:0;text-transform:uppercase;letter-spacing:0.06em;}
+.bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:32px;position:relative;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;padding-left:10px;font-size:0.72rem;font-weight:500;white-space:nowrap;overflow:hidden;}
+.goal-marker{position:absolute;top:0;bottom:0;width:2px;z-index:2;background:var(--gold);}
+.goal-marker-label{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-size:0.58rem;color:var(--gold);white-space:nowrap;letter-spacing:0.1em;text-transform:uppercase;}
+.alloc-list{display:flex;flex-direction:column;gap:12px;}
+.alloc-item{display:flex;align-items:center;gap:12px;}
+.alloc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.alloc-name{flex:1;font-size:0.78rem;color:var(--text-mid);text-transform:capitalize;}
+.alloc-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:0.9rem;width:36px;text-align:right;}
+.alloc-bar-bg{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:4px;}
+.alloc-bar-fg{height:100%;border-radius:2px;transition:width 1s ease;}
+.alert{border-radius:8px;padding:16px 20px;margin-bottom:14px;font-size:0.8rem;line-height:1.7;border-left:3px solid;}
+.alert.warn{background:rgba(224,85,85,0.08);border-color:var(--red);color:#ffb3b3;}
+.alert.success{background:rgba(0,196,160,0.08);border-color:var(--teal);color:#a0ffe8;}
+.alert.info{background:rgba(232,160,0,0.08);border-color:var(--gold);color:#ffe0a0;}
+.alert strong{display:block;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;}
+.tab-nav{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;}
+.tab-btn{background:none;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;white-space:nowrap;flex-shrink:0;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-btn:hover:not(.active){color:var(--text-mid);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeIn 0.3s ease;}
+.expense-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.expense-row:last-child{border-bottom:none;}
+.expense-cat{font-size:0.78rem;color:var(--text-mid);}
+.expense-amt{font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:600;}
+.expense-pct{font-size:0.68rem;color:var(--text-dim);margin-top:2px;}
+footer{text-align:center;padding:40px 0;color:var(--text-dim);font-size:0.68rem;letter-spacing:0.12em;border-top:1px solid var(--border);position:relative;z-index:1;}
+.wi-bucket{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.wi-bucket-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;background:var(--surface);transition:background .15s;user-select:none;}
+.wi-bucket-hd:hover{background:var(--surface2);}
+.wi-hd-left{display:flex;align-items:center;gap:12px;}
+.wi-dot{width:11px;height:11px;border-radius:50%;}
+.wi-hd-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;}
+.wi-hd-sub{font-size:.65rem;color:var(--text-dim);margin-top:2px;}
+.wi-hd-right{display:flex;align-items:center;gap:12px;}
+.wi-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--gold);}
+.wi-pct-badge{font-size:.62rem;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
+.wi-chevron{font-size:.7rem;color:var(--text-dim);transition:transform .2s;}
+.wi-chevron.open{transform:rotate(180deg);}
+.wi-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--border);background:var(--bg);}
+.wi-body.open{display:block;animation:fadeIn .2s ease;}
+.wi-split{font-size:.72rem;color:var(--text-mid);margin-bottom:14px;line-height:1.7;}
+.wi-split strong{color:var(--text);}
+.wi-section-title{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);margin:14px 0 8px;display:flex;align-items:center;gap:8px;}
+.wi-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.wi-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:4px;}
+.wi-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px;position:relative;transition:border-color .15s;}
+.wi-card:hover{border-color:var(--border2);}
+.wi-card.pick{border-color:var(--teal);}
+.wi-card.pick::after{content:'TOP PICK';position:absolute;top:0;right:12px;font-size:.5rem;letter-spacing:.12em;background:var(--teal);color:#000;padding:2px 7px;border-radius:0 0 5px 5px;font-weight:700;}
+.wi-card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;line-height:1.35;margin-bottom:6px;padding-right:4px;}
+.wi-tag{display:inline-block;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;font-weight:700;margin-bottom:8px;}
+.wi-stat{font-size:.68rem;color:var(--text-mid);line-height:1.8;}
+.wi-stat b{color:var(--text);}
+.wi-platform{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.wi-platform-label{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.07em;}
+.wi-platform-val{font-size:.64rem;color:var(--teal);font-weight:600;}
+.wi-why{font-size:.73rem;color:var(--text-mid);line-height:1.75;background:rgba(232,160,0,.05);border:1px solid rgba(232,160,0,.12);border-radius:7px;padding:11px 14px;margin-top:12px;}
+.wi-why b{color:var(--gold);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:3px;}
+.wi-disclaimer{font-size:.65rem;color:var(--text-dim);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;line-height:1.7;}
+.wi-disclaimer b{color:var(--text-mid);}
+@media(max-width:640px){.features{grid-template-columns:1fr;}.data-strip{grid-template-columns:1fr 1fr;}.field-grid{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:1fr 1fr;}.radio-group{grid-template-columns:1fr;}.loan-row{grid-template-columns:1fr 1fr;}nav{padding:0 16px;}.wrap,.wrap-sm{padding:90px 16px 60px;}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<nav>
+  <div class="nav-logo" onclick="goTo('landing')">Fin<span>CA</span></div>
+  <div class="nav-steps">
+    <div class="nav-step" id="step-1">Profile</div>
+    <div class="nav-step" id="step-2">Expenses</div>
+    <div class="nav-step" id="step-3">Loans</div>
+    <div class="nav-step" id="step-4">Report</div>
+  </div>
+</nav>
+
+<!-- LANDING PAGE -->
+<div class="page active" id="page-landing">
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-tag">India's data-driven investment advisor</div>
+    <h1 class="hero-title">Know exactly where<br>your money <em>should go.</em></h1>
+    <p class="hero-sub">FinCA uses 10 years of real Indian market data — Nifty 50, gold prices, RBI inflation, AMFI mutual funds — to build a personalised investment plan based on your actual life, expenses, and goals.</p>
+    <button class="btn-primary" onclick="goTo('profile')">Get My Investment Plan</button>
+    <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How It Works</button>
+  </div>
+
+  <div class="data-strip">
+    <div class="data-item"><div class="data-num">10Y</div><div class="data-label">Market Data</div></div>
+    <div class="data-item"><div class="data-num">800+</div><div class="data-label">Simulations</div></div>
+    <div class="data-item"><div class="data-num">6</div><div class="data-label">Life Factors</div></div>
+    <div class="data-item"><div class="data-num">5</div><div class="data-label">Asset Classes</div></div>
+  </div>
+
+  <div id="how" style="margin-top:64px;">
+    <div class="section-label">What FinCA analyses</div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-title">Real expenses</div>
+        <div class="feature-desc">Calculates your actual investable surplus after rent, EMIs, groceries, dependents, and lifestyle. No flat 20% assumption.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Monte Carlo engine</div>
+        <div class="feature-desc">Runs 800 market simulations showing worst, likely, and best case retirement outcomes based on real Nifty 50 volatility data.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Income growth model</div>
+        <div class="feature-desc">Shows how your corpus grows as your salary increases over time — not just a static SIP assumption for the next 35 years.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Loan detection</div>
+        <div class="feature-desc">Flags high-interest loans above 12% and removes that EMI burden before calculating your investable amount.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Education fund</div>
+        <div class="feature-desc">Projects future education costs for child dependents using historical CPI inflation data from the Reserve Bank of India.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Tax optimisation</div>
+        <div class="feature-desc">Detects your tax bracket and shows exactly how much you can save through ELSS investments under Section 80C.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:64px;padding-top:48px;border-top:1px solid var(--border);">
+    <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:20px;letter-spacing:0.12em;text-transform:uppercase;">Data sourced from</div>
+    <div style="display:flex;justify-content:center;gap:28px;flex-wrap:wrap;">
+      <span style="font-size:0.78rem;color:var(--text-mid);">NSE India</span>
+      <span style="color:var(--border2);">|</span>
+      <span style="font-size:0.78rem;color:var(--text-mid);">MCX India</span>
+      <span style="color:var(--border2);">|</span>
+      <span style="font-size:0.78rem;color:var(--text-mid);">Reserve Bank of India</span>
+      <span style="color:var(--border2);">|</span>
+      <span style="font-size:0.78rem;color:var(--text-mid);">AMFI India</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div class="page" id="page-profile">
+<div class="wrap-sm">
+  <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+  <div class="form-header">
+    <div class="form-page-tag">Step 1 of 3</div>
+    <h2 class="form-page-title">Your profile</h2>
+    <p class="form-page-sub">Basic details to personalise your investment plan.</p>
+  </div>
+  <div class="field-grid">
+    <div class="field-group" style="grid-column:1/-1;">
+      <label class="field-label">Full Name</label>
+      <input type="text" id="f-name" placeholder="Ankita S">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your Age</label>
+      <input type="number" id="f-age" placeholder="25" min="18" max="59">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Monthly Income (Rs)</label>
+      <input type="number" id="f-income" placeholder="50000">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Retirement Goal (Rs)</label>
+      <input type="number" id="f-goal" placeholder="10000000">
+      <div class="field-hint">Total corpus you want at retirement</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Existing Savings (Rs)</label>
+      <input type="number" id="f-savings" placeholder="100000" value="0">
+      <div class="field-hint">Liquid cash or FDs you already have</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Expected Income Growth % per Year</label>
+      <input type="number" id="f-growth" placeholder="8" value="8">
+    </div>
+  </div>
+  <div class="field-group" style="margin-top:8px;">
+    <label class="field-label">Risk Appetite</label>
+    <div class="radio-group" id="risk-group">
+      <label class="radio-option" onclick="selectRadio('risk','aggressive',this)">
+        <input type="radio" name="risk" value="aggressive">
+        <div class="radio-title">Aggressive</div>
+        <div class="radio-desc">High equity, comfortable with market swings</div>
+      </label>
+      <label class="radio-option selected" onclick="selectRadio('risk','moderate',this)">
+        <input type="radio" name="risk" value="moderate" checked>
+        <div class="radio-title">Moderate</div>
+        <div class="radio-desc">Balanced mix of growth and safety</div>
+      </label>
+      <label class="radio-option" onclick="selectRadio('risk','conservative',this)">
+        <input type="radio" name="risk" value="conservative">
+        <div class="radio-title">Conservative</div>
+        <div class="radio-desc">Capital protection, prefer FDs and debt</div>
+      </label>
+    </div>
+  </div>
+  <div class="field-group" style="margin-top:16px;">
+    <label class="field-label">Major Health Condition?</label>
+    <div class="radio-group" style="grid-template-columns:1fr 1fr;">
+      <label class="radio-option selected" onclick="selectRadio('health','no',this)">
+        <input type="radio" name="health" value="no" checked>
+        <div class="radio-title">No</div>
+        <div class="radio-desc">Standard allocation</div>
+      </label>
+      <label class="radio-option" onclick="selectRadio('health','yes',this)">
+        <input type="radio" name="health" value="yes">
+        <div class="radio-title">Yes</div>
+        <div class="radio-desc">Higher health insurance priority</div>
+      </label>
+    </div>
+  </div>
+  <div class="form-nav">
+    <button class="back-btn" onclick="goTo('landing')">Back to home</button>
+    <button class="btn-primary" onclick="goToExpenses()">Next: Expenses</button>
+  </div>
+</div>
+</div>
+
+<!-- EXPENSES PAGE -->
+<div class="page" id="page-expenses">
+<div class="wrap-sm">
+  <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+  <div class="form-header">
+    <div class="form-page-tag">Step 2 of 3</div>
+    <h2 class="form-page-title">Monthly expenses</h2>
+    <p class="form-page-sub">Your real surplus — not an assumed percentage — powers FinCA's recommendations.</p>
+  </div>
+  <div class="field-grid">
+    <div class="field-group">
+      <label class="field-label">Rent or Home EMI (Rs)</label>
+      <input type="number" id="f-rent" placeholder="15000" value="0" oninput="updateSurplus()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Other EMIs — car, education (Rs)</label>
+      <input type="number" id="f-emi" placeholder="0" value="0" oninput="updateSurplus()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Groceries and Food (Rs)</label>
+      <input type="number" id="f-groceries" placeholder="8000" value="0" oninput="updateSurplus()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Bills, Transport, Phone (Rs)</label>
+      <input type="number" id="f-utilities" placeholder="3000" value="0" oninput="updateSurplus()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Number of Dependents</label>
+      <input type="number" id="f-deps" placeholder="0" value="0" min="0" oninput="updateSurplus()">
+      <div class="field-hint">Children, parents, or adults you support</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Lifestyle</label>
+      <select id="f-lifestyle" onchange="updateSurplus()">
+        <option value="frugal">Frugal — spend lean, save more</option>
+        <option value="average" selected>Average — comfortable living</option>
+        <option value="lavish">Lavish — premium lifestyle</option>
+      </select>
+    </div>
+  </div>
+  <div id="surplus-preview" style="display:none;margin-top:8px;"></div>
+  <div class="form-nav">
+    <button class="back-btn" onclick="goTo('profile')">Back</button>
+    <button class="btn-primary" onclick="goTo('loans')">Next: Loans</button>
+  </div>
+</div>
+</div>
+
+<!-- LOANS PAGE -->
+<div class="page" id="page-loans">
+<div class="wrap-sm">
+  <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+  <div class="form-header">
+    <div class="form-page-tag">Step 3 of 3</div>
+    <h2 class="form-page-title">Outstanding loans</h2>
+    <p class="form-page-sub">Loans above 12% interest cost more than most investments return. FinCA prioritises clearing these before investing your surplus.</p>
+  </div>
+  <div id="loans-container"></div>
+  <button class="add-btn" onclick="addLoan()">+ Add a loan</button>
+  <div style="margin-top:20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+    <div style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">No loans?</div>
+    <div style="font-size:0.8rem;color:var(--text-mid);">Leave this section empty and click Generate Report.</div>
+  </div>
+  <div class="form-nav">
+    <button class="back-btn" onclick="goTo('expenses')">Back</button>
+    <button class="btn-primary" onclick="calculate()">Generate My Report</button>
+  </div>
+</div>
+</div>
+
+<!-- RESULTS PAGE -->
+<div class="page" id="page-results">
+<div class="wrap">
+  <div class="results-header">
+    <div class="section-label" style="margin-bottom:12px;">Investment Report</div>
+    <div class="results-name" id="r-name">FinCA Report</div>
+    <div class="results-meta" id="r-meta"></div>
+  </div>
+  <div id="r-alerts"></div>
+  <div class="kpi-grid" id="r-kpis"></div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('corpus',this)">Corpus Projection</button>
+    <button class="tab-btn" onclick="showTab('allocation',this)">Portfolio Allocation</button>
+    <button class="tab-btn" onclick="showTab('breakdown',this)">Income Breakdown</button>
+    <button class="tab-btn" onclick="showTab('taxed',this)">Tax Saving</button>
+    <button class="tab-btn" onclick="showTab('where',this)">Where to Invest</button>
+  </div>
+  <div class="tab-panel active" id="tab-corpus">
+    <div class="card"><div class="section-label">Retirement corpus — 800 market simulations</div><div id="r-bars"></div></div>
+  </div>
+  <div class="tab-panel" id="tab-allocation">
+    <div class="card"><div class="section-label">Recommended portfolio allocation</div><div class="alloc-list" id="r-alloc"></div></div>
+  </div>
+  <div class="tab-panel" id="tab-breakdown">
+    <div class="card"><div class="section-label">Monthly income breakdown</div><div id="r-breakdown"></div></div>
+  </div>
+  <div class="tab-panel" id="tab-taxed">
+    <div class="card"><div class="section-label">Section 80C tax optimisation</div><div id="r-tax"></div></div>
+  </div>
+  <div class="tab-panel" id="tab-where">
+    <div id="r-where"></div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+    <button class="btn-primary" onclick="goTo('landing');resetAll();">Start Over</button>
+    <button class="btn-secondary" onclick="goTo('profile')">Edit Profile</button>
+  </div>
+</div>
+</div>
+
+<footer>FinCA — Built with real Indian market data &nbsp;.&nbsp; NSE &nbsp;.&nbsp; MCX &nbsp;.&nbsp; RBI &nbsp;.&nbsp; AMFI</footer>
+
+<script>
+const AVG_NIFTY=0.2065,AVG_GOLD=0.108,AVG_FD=0.070,AVG_DEBT=0.075,AVG_INF=0.050;
+const COLORS={equity:'#00c4a0',gold:'#e8a000',fd:'#4a90e2',debt_mf:'#a78bfa',health_insurance:'#f472b6'};
+let selRisk='moderate',selHealth='no',loanCount=0;
+
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  const order=['profile','expenses','loans','results'];
+  const map={profile:'step-1',expenses:'step-2',loans:'step-3',results:'step-4'};
+  const idx=order.indexOf(page);
+  document.querySelectorAll('.nav-step').forEach(s=>{s.classList.remove('active','done');s.onclick=null;});
+  order.forEach((p,i)=>{
+    const el=document.getElementById(map[p]);if(!el)return;
+    if(i<idx){el.classList.add('done');el.onclick=()=>goTo(p);}
+    else if(i===idx)el.classList.add('active');
+  });
+}
+
+function selectRadio(group,value,el){
+  el.parentElement.querySelectorAll('.radio-option').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  if(group==='risk')selRisk=value;
+  if(group==='health')selHealth=value;
+}
+
+function goToExpenses(){
+  if(!document.getElementById('f-name').value){alert('Please enter your name.');return;}
+  if(!document.getElementById('f-age').value){alert('Please enter your age.');return;}
+  if(!document.getElementById('f-income').value){alert('Please enter your monthly income.');return;}
+  goTo('expenses');
+}
+
+function updateSurplus(){
+  const income=parseFloat(document.getElementById('f-income').value)||0;
+  const rent=parseFloat(document.getElementById('f-rent').value)||0;
+  const emi=parseFloat(document.getElementById('f-emi').value)||0;
+  const grocer=parseFloat(document.getElementById('f-groceries').value)||0;
+  const utils=parseFloat(document.getElementById('f-utilities').value)||0;
+  const deps=parseInt(document.getElementById('f-deps').value)||0;
+  const ls=document.getElementById('f-lifestyle').value;
+  const lsSpend={frugal:income*0.05,average:income*0.10,lavish:income*0.20}[ls]||0;
+  const depCost=deps*6000;
+  const total=rent+emi+grocer+utils+lsSpend+depCost;
+  const surplus=income-total;
+  const investable=Math.max(Math.round(surplus*0.80),500);
+  const preview=document.getElementById('surplus-preview');
+  preview.style.display='block';
+  if(surplus<500){
+    preview.innerHTML=`<div class="alert warn"><strong>Low Surplus Warning</strong>Monthly surplus is Rs ${Math.round(surplus).toLocaleString('en-IN')}. Expenses are too high relative to income.</div>`;
+  } else {
+    preview.innerHTML=`<div class="alert success"><strong>Live Surplus Preview</strong>Surplus: Rs ${Math.round(surplus).toLocaleString('en-IN')} — FinCA will invest Rs ${investable.toLocaleString('en-IN')}/month and keep Rs ${Math.round(surplus*0.20).toLocaleString('en-IN')} as a liquid buffer.</div>`;
+  }
+}
+
+function addLoan(){
+  loanCount++;const id=loanCount;
+  const c=document.getElementById('loans-container');
+  const div=document.createElement('div');
+  div.className='loan-row';div.id='loan-'+id;
+  div.innerHTML=`
+    <div class="field-group" style="margin:0;"><label class="field-label">Type</label><select style="width:100%;"><option>Personal</option><option>Credit Card</option><option>Vehicle</option><option>Other</option></select></div>
+    <div class="field-group" style="margin:0;"><label class="field-label">Interest Rate %</label><input type="number" placeholder="18" style="width:100%;"></div>
+    <div class="field-group" style="margin:0;"><label class="field-label">Monthly EMI (Rs)</label><input type="number" placeholder="5000" style="width:100%;"></div>
+    <button class="loan-remove" onclick="document.getElementById('loan-${id}').remove();">x</button>
+  `;
+  c.appendChild(div);
+}
+
+function getLoans(){
+  const rows=document.querySelectorAll('.loan-row');
+  const loans=[],highCost=[];
+  rows.forEach(row=>{
+    const inputs=row.querySelectorAll('input[type=number]');
+    const rate=parseFloat(inputs[0]?.value)||0;
+    const emi=parseFloat(inputs[1]?.value)||0;
+    const type=row.querySelector('select')?.value||'Other';
+    if(emi>0){loans.push({type,rate,emi});if(rate>12)highCost.push({type,rate,emi});}
+  });
+  return{loans,highCost};
+}
+
+function getAlloc(age,risk,hasHealth,deps,hasEMI){
+  const ytr=Math.max(60-age,1);
+  let b;
+  if(hasHealth)b={equity:20,gold:10,fd:25,debt_mf:20,health_insurance:25};
+  else if(risk==='aggressive')b={equity:60,gold:10,fd:10,debt_mf:15,health_insurance:5};
+  else if(risk==='moderate')b={equity:40,gold:15,fd:20,debt_mf:20,health_insurance:5};
+  else b={equity:20,gold:20,fd:35,debt_mf:20,health_insurance:5};
+  if(deps>=2){b.health_insurance=Math.min(b.health_insurance+5,25);b.equity=Math.max(b.equity-5,10);}
+  if(hasEMI){b.equity=Math.max(b.equity-5,10);b.fd+=5;}
+  if(ytr<10){const cut=Math.min(b.equity,20);b.equity-=cut;b.fd+=cut;}
+  return b;
+}
+
+function getWR(a){const t=Object.values(a).reduce((x,y)=>x+y,0);return(a.equity/t)*AVG_NIFTY+(a.gold/t)*AVG_GOLD+(a.fd/t)*AVG_FD+(a.debt_mf/t)*AVG_DEBT;}
+
+function mcSim(sip,years,wr,n=800){
+  const res=[];
+  for(let i=0;i<n;i++){let c=0;for(let m=0;m<years*12;m++){const mr=(wr+(Math.random()-0.5)*0.08)/12;c=(c+sip)*(1+mr);}res.push(c);}
+  res.sort((a,b)=>a-b);
+  return{worst:res[Math.floor(n*0.10)],likely:res[Math.floor(n*0.50)],best:res[Math.floor(n*0.90)]};
+}
+
+function growC(sip,years,wr,g){const rm=wr/12,gm=g/12/100;let c=0,cur=sip;for(let m=0;m<years*12;m++){c=(c+cur)*(1+rm);cur*=(1+gm);}return c;}
+
+function fmt(n){const a=Math.abs(n);if(a>=10000000)return'Rs '+(n/10000000).toFixed(2)+' Cr';if(a>=100000)return'Rs '+(n/100000).toFixed(2)+' L';return'Rs '+Math.round(n).toLocaleString('en-IN');}
+
+function calculate(){
+  const name=document.getElementById('f-name').value||'You';
+  const age=parseInt(document.getElementById('f-age').value)||25;
+  const income=parseFloat(document.getElementById('f-income').value)||50000;
+  const goal=parseFloat(document.getElementById('f-goal').value)||10000000;
+  const savings=parseFloat(document.getElementById('f-savings').value)||0;
+  const growth=parseFloat(document.getElementById('f-growth').value)||8;
+  const rent=parseFloat(document.getElementById('f-rent').value)||0;
+  const emi=parseFloat(document.getElementById('f-emi').value)||0;
+  const grocer=parseFloat(document.getElementById('f-groceries').value)||0;
+  const utils=parseFloat(document.getElementById('f-utilities').value)||0;
+  const deps=parseInt(document.getElementById('f-deps').value)||0;
+  const ls=document.getElementById('f-lifestyle').value;
+  const lsSpend={frugal:income*0.05,average:income*0.10,lavish:income*0.20}[ls];
+  const depCost=deps*6000;
+  const totalExp=rent+emi+grocer+utils+lsSpend+depCost;
+  const surplus=income-totalExp;
+  const{loans,highCost}=getLoans();
+  const highEMI=highCost.reduce((a,l)=>a+l.emi,0);
+  const hasEMI=emi>0||loans.some(l=>l.emi>0);
+  const investable=Math.max(Math.round((surplus-highEMI)*0.80),500);
+  const ytr=Math.max(60-age,1);
+  const efReq=totalExp*6;
+  const efOk=savings>=efReq;
+  const alloc=getAlloc(age,selRisk,selHealth==='yes',deps,hasEMI);
+  const wr=getWR(alloc);
+  const sim=mcSim(investable,ytr,wr);
+  const grow=growC(investable,ytr,wr,growth);
+  const infAdj=sim.likely/Math.pow(1+AVG_INF,ytr);
+  const gap=goal-sim.likely;
+  const annInc=income*12;
+  const bracket=annInc>1500000?0.30:annInc>700000?0.20:0.05;
+  const elssAmt=Math.min((alloc.equity/100)*income*12,150000);
+  const taxSaved=Math.round(elssAmt*bracket);
+
+  goTo('results');
+
+  document.getElementById('r-name').textContent=name+"'s Investment Report";
+  document.getElementById('r-meta').textContent=`Age ${age}  .  ${ytr} years to retirement  .  ${selRisk.charAt(0).toUpperCase()+selRisk.slice(1)} risk  .  ${new Date().toLocaleDateString('en-IN')}`;
+
+  let ah='';
+  if(!efOk)ah+=`<div class="alert warn"><strong>Emergency Fund Alert</strong>You need ${fmt(efReq)} as a 6-month emergency reserve. Shortfall: ${fmt(efReq-savings)}. Build this before increasing your SIP.</div>`;
+  highCost.forEach(l=>{ah+=`<div class="alert warn"><strong>High-Interest Loan — ${l.rate}%</strong>Your ${l.type} loan costs more than most investments return. EMI of ${fmt(l.emi)}/month excluded from investable amount.</div>`;});
+  if(surplus<500)ah+=`<div class="alert warn"><strong>Low Surplus</strong>Expenses are too close to your income. FinCA is using a minimum SIP of Rs 500.</div>`;
+  if(gap<=0)ah+=`<div class="alert success"><strong>On Track</strong>You are projected to meet your retirement goal. With ${growth}% income growth, you will comfortably exceed it.</div>`;
+  document.getElementById('r-alerts').innerHTML=ah;
+
+  document.getElementById('r-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Monthly SIP</div><div class="kpi-val gold">${fmt(investable)}</div><div class="kpi-sub">After expenses and 20% buffer</div></div>
+    <div class="kpi ${gap<=0?'accent':''}"><div class="kpi-label">Likely Corpus</div><div class="kpi-val ${gap<=0?'teal':''}">${fmt(sim.likely)}</div><div class="kpi-sub">50th percentile of 800 simulations</div></div>
+    <div class="kpi"><div class="kpi-label">Your Goal</div><div class="kpi-val gold">${fmt(goal)}</div><div class="kpi-sub">${gap<=0?'You will exceed this':'Shortfall: '+fmt(gap)}</div></div>
+    <div class="kpi"><div class="kpi-label">With Income Growth</div><div class="kpi-val teal">${fmt(grow)}</div><div class="kpi-sub">At ${growth}% annual salary growth</div></div>
+    <div class="kpi"><div class="kpi-label">Inflation Adjusted</div><div class="kpi-val">${fmt(infAdj)}</div><div class="kpi-sub">In today's purchasing power</div></div>
+    <div class="kpi"><div class="kpi-label">Portfolio Return</div><div class="kpi-val gold">${(wr*100).toFixed(1)}%</div><div class="kpi-sub">Weighted annual return estimate</div></div>
+  `;
+
+  const maxV=Math.max(sim.best,goal,grow)*1.05;
+  const gp=(goal/maxV*100).toFixed(1);
+  document.getElementById('r-bars').innerHTML=`
+    <div style="position:relative;padding-top:24px;">
+      <div class="bar-row"><div class="bar-lbl">Worst Case</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"><div class="goal-marker-label">Goal</div></div><div class="bar-fill" id="b-worst" style="background:rgba(224,85,85,0.25);color:#ffaaaa;"></div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Likely</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-likely" style="background:rgba(0,196,160,0.2);color:var(--teal);"></div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Best Case</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-best" style="background:rgba(232,160,0,0.2);color:var(--gold);"></div></div></div>
+      <div class="bar-row"><div class="bar-lbl">With Growth</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-grow" style="background:rgba(167,139,250,0.2);color:#c4b5fd;"></div></div></div>
+    </div>
+    <div style="font-size:0.68rem;color:var(--text-dim);margin-top:8px;">Gold vertical line marks your retirement goal of ${fmt(goal)}</div>
+  `;
+  setTimeout(()=>{
+    document.getElementById('b-worst').style.width=(sim.worst/maxV*100)+'%';document.getElementById('b-worst').textContent=fmt(sim.worst);
+    document.getElementById('b-likely').style.width=(sim.likely/maxV*100)+'%';document.getElementById('b-likely').textContent=fmt(sim.likely);
+    document.getElementById('b-best').style.width=(sim.best/maxV*100)+'%';document.getElementById('b-best').textContent=fmt(sim.best);
+    document.getElementById('b-grow').style.width=(Math.min(grow,maxV)/maxV*100)+'%';document.getElementById('b-grow').textContent=fmt(grow);
+  },150);
+
+  document.getElementById('r-alloc').innerHTML=Object.entries(alloc).map(([k,v])=>`
+    <div class="alloc-item"><div class="alloc-dot" style="background:${COLORS[k]||'#888'}"></div><div class="alloc-name">${k.replace('_',' ')}</div><div class="alloc-pct" style="color:${COLORS[k]||'var(--text)'}">${v}%</div></div>
+    <div class="alloc-bar-bg"><div class="alloc-bar-fg" style="width:${v}%;background:${COLORS[k]||'#888'};"></div></div>
+  `).join('');
+
+  const items=[['Rent and EMI',rent+emi],['Groceries and Food',grocer],['Bills and Utilities',utils],['Lifestyle',Math.round(lsSpend)],['Dependents',depCost],['Liquid Buffer',Math.round(surplus*0.20)],['Monthly SIP',investable]];
+  document.getElementById('r-breakdown').innerHTML=items.map(([cat,amt])=>`
+    <div class="expense-row">
+      <div><div class="expense-cat">${cat}</div><div class="expense-pct">${income>0?((amt/income)*100).toFixed(1):0}% of income</div></div>
+      <div class="expense-amt" style="color:${cat==='Monthly SIP'?'var(--teal)':cat==='Liquid Buffer'?'var(--gold)':'var(--text)'}">${fmt(amt)}</div>
+    </div>
+  `).join('')+`<div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:12px;display:flex;justify-content:space-between;"><div style="font-size:0.72rem;color:var(--text-mid);">Total Monthly Income</div><div style="font-family:'Syne',sans-serif;font-weight:800;">${fmt(income)}</div></div>`;
+
+  document.getElementById('r-tax').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div class="kpi"><div class="kpi-label">Tax Bracket</div><div class="kpi-val gold">${Math.round(bracket*100)}%</div></div>
+      <div class="kpi"><div class="kpi-label">ELSS Eligible per Year</div><div class="kpi-val gold">${fmt(elssAmt)}</div></div>
+      <div class="kpi accent"><div class="kpi-label">Tax Saved per Year</div><div class="kpi-val teal">${fmt(taxSaved)}</div></div>
+      <div class="kpi"><div class="kpi-label">Section 80C Limit</div><div class="kpi-val">Rs 1.50 L</div></div>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-mid);line-height:1.8;">By routing your equity allocation into ELSS mutual funds, you save ${fmt(taxSaved)} in taxes per year. ELSS has a 3-year lock-in — the shortest among all 80C instruments — and delivers equity-level returns. Over ${ytr} years, this annual saving compounded could add roughly ${fmt(taxSaved*ytr*1.3)} in additional wealth.</div>
+  `;
+
+  buildWhere(alloc, investable, selRisk, ytr, annInc);
+}
+
+function showTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function wiToggle(id){
+  const body=document.getElementById('wi-body-'+id);
+  const chev=document.getElementById('wi-chev-'+id);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function wiCard(name,tag,tagColor,stats,platform,pick,note){
+  return `<div class="wi-card${pick?' pick':''}">
+    <div class="wi-card-name">${name}</div>
+    <span class="wi-tag" style="background:${tagColor}22;color:${tagColor}">${tag}</span>
+    <div class="wi-stat">${stats}</div>
+    <div class="wi-platform"><span class="wi-platform-label">Via</span><span class="wi-platform-val">${platform}</span></div>
+    ${note?`<div style="font-size:.62rem;color:var(--text-dim);margin-top:8px;line-height:1.6;">${note}</div>`:''}
+  </div>`;
+}
+
+function buildWhere(alloc, investable, risk, ytr, annInc){
+  const f=n=>fmt(n);
+  const buckets=[];
+
+  // ── EQUITY ──────────────────────────────────────────────────────────
+  const eqAmt=Math.round(investable*(alloc.equity/100));
+  if(eqAmt>0){
+    const elssAmt=Math.min(eqAmt,Math.round(150000/12));
+    const directAmt=eqAmt-elssAmt;
+
+    let mfCards='', stockCards='', etfCards='';
+
+    if(risk==='aggressive'){
+      mfCards=
+        wiCard('Parag Parikh Flexi Cap','Flexi Cap','#00c4a0',
+          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Global exposure','Groww / Kuvera',true,'Best all-weather fund. Holds Indian + US stocks (Google, Meta). Survives Indian market crashes.')+
+        wiCard('Nippon India Small Cap','Small Cap','#00c4a0',
+          '<b>~22% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 500/mo · Very high risk','Zerodha Coin',false,'Highest return potential for 7+ year horizons. Expect 40–50% drawdowns in bad years — stay invested.')+
+        wiCard('Kotak Emerging Equity','Mid Cap','#00c4a0',
+          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Moderate-high risk','Groww / Kuvera',false,'Sweet spot between large and small cap. Better returns than Nifty with manageable volatility.');
+      etfCards=
+        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
+          '<b>~15% CAGR (10Y)</b> · No lock-in<br>Expense ratio: 0.04% · Very low cost','Zerodha / Upstox',false,'Buy Nifty 50 like a stock. Cheapest way to own India\'s top 50 companies.')+
+        wiCard('Nifty Next 50 ETF (JUNIORBEES)','Index ETF','#4a90e2',
+          '<b>~16% CAGR (10Y)</b> · No lock-in<br>Min: 1 unit via exchange','Zerodha / Groww',false,'The 51st–100th largest Indian companies — tomorrow\'s Nifty 50. Higher growth, slightly more volatile.');
+      stockCards=
+        wiCard('Reliance Industries','Blue Chip Stock','#f472b6',
+          '<b>NSE: RELIANCE</b> · Conglomerate<br>Market cap: Rs 17L Cr · Diversified','Zerodha / Groww',false,'Energy, retail, telecom — if India grows, Reliance grows.')+
+        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
+          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE · Low NPA','Zerodha / Upstox',true,'India\'s most trusted private bank. Stable compounder over 10+ years.')+
+        wiCard('Infosys','Blue Chip Stock','#f472b6',
+          '<b>NSE: INFY</b> · IT Services<br>Strong USD revenue · Dividend payer','Zerodha / Groww',false,'Exports software globally. Natural hedge if rupee depreciates.')+
+        wiCard('Tata Motors (DVR)','Growth Stock','#f472b6',
+          '<b>NSE: TATAMTRDVR</b> · Auto + EV<br>Jaguar Land Rover exposure','Zerodha / Upstox',false,'EV play with global exposure via JLR. Higher risk, higher upside.');
+    } else if(risk==='moderate'){
+      mfCards=
+        wiCard('Parag Parikh Flexi Cap','Flexi Cap','#00c4a0',
+          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Moderate risk','Groww / Kuvera',true,'Globally diversified. Holds Indian blue chips + US tech stocks. Best moderate fund.')+
+        wiCard('Mirae Asset Large & Mid Cap','Large & Mid Cap','#00c4a0',
+          '<b>~17% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo','Zerodha Coin',false,'50% large cap safety + 50% mid cap growth. Good middle-ground fund.')+
+        wiCard('ICICI Pru Bluechip Fund','Large Cap','#00c4a0',
+          '<b>~15% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 100/mo · Low volatility','Groww / Kuvera',false,'Steady compounder. Lower drawdowns in market crashes than flexi/mid cap.');
+      etfCards=
+        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
+          '<b>~15% CAGR (10Y)</b> · 0.04% expense ratio<br>Buy on NSE like a stock','Zerodha / Upstox',false,'Passively track Nifty 50. No fund manager risk. Lower cost than active funds.');
+      stockCards=
+        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
+          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE','Zerodha / Groww',true,'India\'s most reliable compounder. Buy and hold forever.')+
+        wiCard('TCS','Blue Chip Stock','#f472b6',
+          '<b>NSE: TCS</b> · IT Exports<br>USD revenue · Strong dividends','Zerodha / Upstox',false,'Tata\'s IT giant. Defensive pick — earns in dollars, benefits if rupee weakens.')+
+        wiCard('Asian Paints','Blue Chip Stock','#f472b6',
+          '<b>NSE: ASIANPAINT</b> · Consumer<br>Dominant market share','Groww / Zerodha',false,'40% market share in paints. Pricing power, low debt, consistent growth for 20+ years.');
+    } else {
+      mfCards=
+        wiCard('ICICI Pru Bluechip Fund','Large Cap','#00c4a0',
+          '<b>~15% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 100/mo · Low volatility','Groww / Kuvera',true,'Lowest risk among equity mutual funds. Sticks to Nifty 50 companies only.')+
+        wiCard('Mirae Asset Tax Saver (ELSS)','ELSS · 80C','#a78bfa',
+          '<b>~17% CAGR (5Y)</b> · 3-year lock-in<br>Min SIP: Rs 500/mo','Zerodha Coin',false,'Use for your 80C limit. 3-year lock-in forces you to stay invested — good for conservative investors.');
+      etfCards=
+        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
+          '<b>~15% CAGR (10Y)</b> · 0.04% expense ratio','Zerodha / Upstox',false,'Safest equity option. Zero manager risk, lowest cost, tracks the top 50 Indian companies.');
+      stockCards=
+        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
+          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE','Zerodha / Groww',true,'Most stable Indian stock over the past 20 years. Low risk for a stock.')+
+        wiCard('ITC','Dividend Stock','#f472b6',
+          '<b>NSE: ITC</b> · FMCG + Hotels<br>Dividend yield ~3–4%','Zerodha / Upstox',false,'High dividend payer. More like a fixed income investment but with upside. Suits conservative investors.');
+    }
+
+    const elssCard=wiCard('Mirae Asset ELSS Tax Saver','ELSS · Section 80C','#a78bfa',
+      `<b>Up to Rs ${Math.round(150000/12).toLocaleString('en-IN')}/mo</b> tax-free<br>3-year lock-in · ~17% CAGR (5Y)`,'Groww / Kuvera',false,
+      'Route your equity SIP here first to exhaust your Rs 1.5L 80C limit before investing in regular equity funds.');
+
+    buckets.push({
+      id:'eq', color:'#00c4a0', title:'Equity', sub:'Stocks · Mutual Funds · ETFs · ELSS',
+      amt:eqAmt, pct:alloc.equity,
+      body:`
+        <div class="wi-split">Split your <strong>${f(eqAmt)}/month</strong> as: <strong>${f(elssAmt)}</strong> → ELSS (exhaust 80C first) + <strong>${f(Math.max(directAmt,0))}</strong> → Flexi Cap / Index ETF / Direct Stocks</div>
+        <div class="wi-section-title">Mutual Funds (SIP)</div>
+        <div class="wi-cards">${mfCards}${elssCard}</div>
+        <div class="wi-section-title">Index ETFs (buy on exchange)</div>
+        <div class="wi-cards">${etfCards}</div>
+        <div class="wi-section-title">Direct Stocks (optional · 10–15% of equity bucket)</div>
+        <div class="wi-cards">${stockCards}</div>
+        <div class="wi-why"><b>Strategy</b>Put 60–70% of equity into a Flexi Cap SIP (hands-off). Use 20% for an Index ETF (cheapest). Reserve 10–15% for direct stocks only if you enjoy researching companies — otherwise skip.</div>
+      `
+    });
+  }
+
+  // ── GOLD ────────────────────────────────────────────────────────────
+  const goldAmt=Math.round(investable*(alloc.gold/100));
+  if(goldAmt>0){
+    const sgbCards=
+      wiCard('Sovereign Gold Bond (SGB)','Govt. Bond · RBI','#e8a000',
+        '<b>Gold price appreciation + 2.5% p.a.</b> interest<br>8-year tenure · Tax-free on maturity','RBI Retail Direct / HDFC Bank',true,'Best gold investment in India. You earn gold returns PLUS 2.5% interest. Zero making charges. Tax-free if held to maturity. Buy during RBI issue windows.')+
+      wiCard('Nippon India Gold ETF (GOLDBEES)','Gold ETF','#e8a000',
+        '<b>Tracks gold price live</b><br>No lock-in · Expense: 0.54%<br>Buy/sell like a stock on NSE','Zerodha / Upstox',false,'Best if you want liquidity. Price moves 1:1 with gold. No storage risk, no making charges. Min 1 unit (~Rs 60).')+
+      wiCard('Digital Gold','Digital Asset','#e8a000',
+        '<b>24K pure gold</b> · Start with Rs 1<br>MMTC-PAMP backed · No lock-in','Groww / PhonePe / Paytm',false,'For small amounts (under Rs 1,000/mo). Higher charges than ETF/SGB long-term. Good for beginners.');
+    buckets.push({
+      id:'gold', color:'#e8a000', title:'Gold', sub:'SGB · ETF · Digital Gold',
+      amt:goldAmt, pct:alloc.gold,
+      body:`
+        <div class="wi-split">Invest <strong>${f(goldAmt)}/month</strong>. Priority: SGB when RBI opens issuance → Gold ETF for monthly SIP → Digital Gold for micro-amounts.</div>
+        <div class="wi-section-title">Where to put your gold money</div>
+        <div class="wi-cards">${sgbCards}</div>
+        <div class="wi-why"><b>Strategy</b>SGBs are the clear winner for long-term gold (8 years+) — you get gold returns plus 2.5% interest, and zero tax on maturity. For monthly SIP-style investing, Gold ETF via Zerodha is the best alternative since SGBs aren't always available. Avoid jewellery and physical gold entirely.</div>
+      `
+    });
+  }
+
+  // ── FIXED DEPOSIT / DEBT ─────────────────────────────────────────────
+  const fdAmt=Math.round(investable*(alloc.fd/100));
+  if(fdAmt>0){
+    const fdCards=
+      wiCard('SBI Fixed Deposit','Govt. Bank FD','#4a90e2',
+        '<b>6.8–7.1% p.a.</b> (1–5 yr)<br>Safest FD in India · TDS applies','SBI YONO App / Branch',true,'Sovereign guarantee effectively. Lowest risk. Good for your emergency buffer or capital protection portion.')+
+      wiCard('IDFC First Bank FD','Small Finance Bank FD','#4a90e2',
+        '<b>7.75–8.25% p.a.</b> (1–3 yr)<br>DICGC insured up to Rs 5L','IDFC First Mobile App',false,'Higher rate than PSU banks. DICGC insured (safe up to Rs 5L). Good for medium-term parking.')+
+      wiCard('RBI Floating Rate Savings Bond','Govt. Bond','#4a90e2',
+        '<b>8.05% p.a.</b> (current) · 7-year lock<br>Linked to NSC rate · No TDS','RBI Retail Direct',false,'Better than most FDs. Rate floats every 6 months. No TDS deducted. Ideal for conservative investors with 7-year horizon.')+
+      wiCard('Post Office Monthly Income Scheme','Govt. Scheme','#4a90e2',
+        '<b>7.4% p.a.</b> paid monthly<br>Max Rs 9L (single) · 5-year lock','Post Office / India Post App',false,'Sends interest to your account every month. Useful if you need regular income from your investments.');
+    buckets.push({
+      id:'fd', color:'#4a90e2', title:'Fixed Deposits & Bonds', sub:'FD · RBI Bonds · Post Office Schemes',
+      amt:fdAmt, pct:alloc.fd,
+      body:`
+        <div class="wi-split">Park <strong>${f(fdAmt)}/month</strong> in safe, guaranteed-return instruments. Build to a lump sum then place FDs — or use recurring deposits (RD) at your bank for monthly auto-deposit.</div>
+        <div class="wi-section-title">Fixed income options</div>
+        <div class="wi-cards">${fdCards}</div>
+        <div class="wi-why"><b>Strategy</b>Use SBI or HDFC FD for your liquid emergency buffer (up to Rs 5L). Move anything beyond that to RBI Bonds (8.05%) for better rates. IDFC / Ujjivan Small Finance Bank FDs offer 8%+ but keep each below Rs 5L (DICGC insurance limit).</div>
+      `
+    });
+  }
+
+  // ── DEBT MUTUAL FUNDS ────────────────────────────────────────────────
+  const debtAmt=Math.round(investable*(alloc.debt_mf/100));
+  if(debtAmt>0){
+    const debtCards=
+      wiCard('HDFC Low Duration Fund','Debt MF · Low Duration','#a78bfa',
+        '<b>~7.5% p.a.</b> · No lock-in<br>Better than savings account<br>More tax-efficient than FD','Groww / Kuvera',true,'Park money here instead of savings account. Withdrawable in 1–2 business days. Better post-tax returns than FD for 30% bracket.')+
+      wiCard('Aditya Birla SL Money Manager','Money Market Fund','#a78bfa',
+        '<b>~7.3% p.a.</b> · No lock-in<br>Very low risk · High liquidity<br>For short-term parking','Groww / Zerodha Coin',false,'Effectively a liquid FD. Near-zero risk. Suitable for your 3–6 month buffer beyond emergency fund.')+
+      wiCard('ICICI Pru Short Term Fund','Short Duration Debt MF','#a78bfa',
+        '<b>~7.8% p.a.</b> · 1–3 yr horizon<br>Moderate interest rate risk','Zerodha Coin / Kuvera',false,'Better returns than low-duration with slightly more risk. Good for a 2–3 year financial goal like a car or vacation.')+
+      wiCard('Nippon India Gilt Fund','Gilt Fund (Govt.)','#a78bfa',
+        '<b>~8–10% p.a.</b> (variable)<br>Zero credit risk · Rate sensitive<br>3+ year horizon recommended','Zerodha Coin',false,'Invests only in RBI government securities. Zero default risk. Returns vary with interest rate cycles — best when rates fall.');
+    buckets.push({
+      id:'debt', color:'#a78bfa', title:'Debt Mutual Funds', sub:'Low Duration · Money Market · Short Term · Gilt',
+      amt:debtAmt, pct:alloc.debt_mf,
+      body:`
+        <div class="wi-split">SIP <strong>${f(debtAmt)}/month</strong> into debt funds. These sit between FDs (rigid) and equity (volatile) — liquid, tax-efficient, and better returns than savings accounts.</div>
+        <div class="wi-section-title">Debt fund options</div>
+        <div class="wi-cards">${debtCards}</div>
+        <div class="wi-why"><b>Why not just FD?</b> Debt MFs are more tax-efficient than FDs for people in the 20–30% tax bracket — FD interest is taxed as income every year, while debt MF gains are taxed only on withdrawal. Also fully liquid with no premature withdrawal penalty.</div>
+      `
+    });
+  }
+
+  // ── HEALTH INSURANCE ─────────────────────────────────────────────────
+  const hiAmt=Math.round(investable*(alloc.health_insurance/100));
+  if(hiAmt>0){
+    const hiCards=
+      wiCard('Niva Bupa ReAssure 2.0','Health Insurance','#f472b6',
+        '<b>Unlimited restore</b> benefit<br>No room rent capping<br>Cashless at 8,500+ hospitals','Policybazaar / Niva Bupa App',true,'Best all-round health plan in India right now. Unlimited claim restoration means one hospitalisation doesn\'t wipe your cover.')+
+      wiCard('Star Health Comprehensive','Health Insurance','#f472b6',
+        '<b>Wide hospital network</b><br>OPD cover available<br>No pre-auth required at network hospitals','Policybazaar / Star Health',false,'Strong for families with children. Covers OPD consultations. Good claim settlement ratio (~90%).')+
+      wiCard('HDFC ERGO Optima Secure','Health Insurance','#f472b6',
+        '<b>4x cover on Day 1</b><br>No sub-limits on room rent<br>Good for metro cities','Policybazaar / HDFC ERGO',false,'Doubles your cover to 4x from day one. Excellent for metro residents where hospital costs are very high.')+
+      wiCard('NPS Tier-1 (Additional 80CCD)','Pension + Tax Save','#f472b6',
+        '<b>Extra Rs 50,000</b> deduction (80CCD1B)<br>~10–12% returns (equity tier)<br>Locked till 60','NPS Trust / HDFC Pension',false,'Beyond your Rs 1.5L 80C limit, NPS gives Rs 50,000 more deduction. Invest in equity tier for best returns. Locked till retirement — perfect for this bucket.');
+    buckets.push({
+      id:'hi', color:'#f472b6', title:'Health Insurance & NPS', sub:'Medical Cover · Pension · Tax Benefits',
+      amt:hiAmt, pct:alloc.health_insurance,
+      body:`
+        <div class="wi-split">Spend <strong>${f(hiAmt)}/month</strong> here. Priority 1: Buy adequate health cover (min Rs 10L for individuals, Rs 25L for families). Priority 2: Route any remaining amount into NPS for an extra Rs 50K tax deduction.</div>
+        <div class="wi-section-title">Health & protection products</div>
+        <div class="wi-cards">${hiCards}</div>
+        <div class="wi-why"><b>Rule of thumb</b>Health cover = at least 50% of your annual income. One serious illness without insurance can wipe out years of savings. Buy term life insurance separately — Rs 1 crore cover costs roughly Rs 600–800/month in your 20s and 30s. Check LIC Tech Term, HDFC Click 2 Protect, or ICICI iProtect Smart.</div>
+      `
+    });
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────────
+  const disclaimer=`<div class="wi-disclaimer"><b>Disclaimer:</b> These are commonly used products for informational purposes only. FinCA is not a SEBI-registered advisor. Past returns are not guaranteed. Verify current rates, terms, and NAVs before investing. Consult a certified financial advisor (CFP/RIA) for personalised advice.</div>`;
+
+  const html=disclaimer+buckets.map(b=>`
+    <div class="wi-bucket">
+      <div class="wi-bucket-hd" onclick="wiToggle('${b.id}')">
+        <div class="wi-hd-left">
+          <div class="wi-dot" style="background:${b.color}"></div>
+          <div><div class="wi-hd-title">${b.title}</div><div class="wi-hd-sub">${b.sub}</div></div>
+        </div>
+        <div class="wi-hd-right">
+          <div class="wi-amt">${f(b.amt)}<span style="font-size:.65rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
+          <div class="wi-pct-badge">${b.pct}%</div>
+          <div class="wi-chevron" id="wi-chev-${b.id}">▼</div>
+        </div>
+      </div>
+      <div class="wi-body" id="wi-body-${b.id}">${b.body}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('r-where').innerHTML=html;
+
+  // Auto-open first bucket
+  wiToggle('eq');
+}
+
+function resetAll(){selRisk='moderate';selHealth='no';loanCount=0;document.getElementById('loans-container').innerHTML='';document.getElementById('surplus-preview').style.display='none';}
+</script>
+</body>
+</html>
