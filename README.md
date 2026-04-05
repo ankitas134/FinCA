@@ -1,4 +1,4 @@
-##FinCA – AI-Powered Personal Financial Advisor
+FinCA – AI-Powered Personal Financial Advisor
 
 FinCA is a data-driven financial planning system that generates personalized investment strategies based on an individual’s income, expenses, goals, and risk profile.
 
@@ -43,3 +43,32 @@ Tech Stack
 Python
 SQLite
 JSON
+Project Structure
+
+finca/
+│── finca.db # Financial datasets (NIFTY, gold, FD, inflation)
+│── main.py # Core application
+│── finca_output.json # Generated financial report
+
+Execution
+
+python main.py
+
+The application runs in an interactive CLI mode and generates a structured financial report along with a JSON export.
+
+Output
+Console-based financial analysis report
+Machine-readable output file: finca_output.json
+Design Approach
+Uses historical financial datasets (equity, gold, FD rates, inflation)
+Applies compound growth and weighted return models
+Incorporates stochastic simulation for realistic forecasting
+Prioritizes practical financial decision-making over theoretical assumptions
+Scope
+
+This project is intended for demonstration, academic, and portfolio purposes.
+It is not open for external contributions.
+
+Author
+
+Ankita S
