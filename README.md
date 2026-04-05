@@ -1,6 +1,6 @@
 # FinCA — Personal Investment Advisor
 
-> **[Try it live →](https://ankitas34.github.io/FinCA/)**
+> **[Try it live →](https://ankitas134.github.io/FinCA/)**
 
 FinCA is a data-driven investment recommendation engine built for Indian retail investors. It takes your income, expenses, dependents, loans, and goals — and tells you exactly where to put your money, how much to invest, and whether you will hit your retirement target.
 
