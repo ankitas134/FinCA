@@ -81,6 +81,4 @@ FinCA/
 ---
 
 ## Author
-
-Built by Ankit as a fintech portfolio project.
-Targeting data analyst roles in Indian fintech.
+Ankita S
