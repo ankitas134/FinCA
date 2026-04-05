@@ -317,23 +317,23 @@ footer{text-align:center;padding:40px 0;color:var(--text-dim);font-size:0.68rem;
   <div class="field-grid">
     <div class="field-group">
       <label class="field-label">Rent or Home EMI (Rs)</label>
-      <input type="number" id="f-rent" placeholder="15000" value="0" oninput="updateSurplus()">
+      <input type="number" id="f-rent" placeholder="Eg:15000" value="0" oninput="updateSurplus()">
     </div>
     <div class="field-group">
       <label class="field-label">Other EMIs — car, education (Rs)</label>
-      <input type="number" id="f-emi" placeholder="0" value="0" oninput="updateSurplus()">
+      <input type="number" id="f-emi" placeholder="Eg:0" value="0" oninput="updateSurplus()">
     </div>
     <div class="field-group">
       <label class="field-label">Groceries and Food (Rs)</label>
-      <input type="number" id="f-groceries" placeholder="8000" value="0" oninput="updateSurplus()">
+      <input type="number" id="f-groceries" placeholder="Eg:8000" value="0" oninput="updateSurplus()">
     </div>
     <div class="field-group">
       <label class="field-label">Bills, Transport, Phone (Rs)</label>
-      <input type="number" id="f-utilities" placeholder="3000" value="0" oninput="updateSurplus()">
+      <input type="number" id="f-utilities" placeholder="Eg:3000" value="0" oninput="updateSurplus()">
     </div>
     <div class="field-group">
       <label class="field-label">Number of Dependents</label>
-      <input type="number" id="f-deps" placeholder="0" value="0" min="0" oninput="updateSurplus()">
+      <input type="number" id="f-deps" placeholder="Eg:0" value="0" min="0" oninput="updateSurplus()">
       <div class="field-hint">Children, parents, or adults you support</div>
     </div>
     <div class="field-group">
@@ -479,8 +479,8 @@ function addLoan(){
   div.className='loan-row';div.id='loan-'+id;
   div.innerHTML=`
     <div class="field-group" style="margin:0;"><label class="field-label">Type</label><select style="width:100%;"><option>Personal</option><option>Credit Card</option><option>Vehicle</option><option>Other</option></select></div>
-    <div class="field-group" style="margin:0;"><label class="field-label">Interest Rate %</label><input type="number" placeholder="18" style="width:100%;"></div>
-    <div class="field-group" style="margin:0;"><label class="field-label">Monthly EMI (Rs)</label><input type="number" placeholder="5000" style="width:100%;"></div>
+    <div class="field-group" style="margin:0;"><label class="field-label">Interest Rate %</label><input type="number" placeholder="Eg:18" style="width:100%;"></div>
+    <div class="field-group" style="margin:0;"><label class="field-label">Monthly EMI (Rs)</label><input type="number" placeholder="Eg:5000" style="width:100%;"></div>
     <button class="loan-remove" onclick="document.getElementById('loan-${id}').remove();">x</button>
   `;
   c.appendChild(div);
