@@ -1,426 +1,802 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FinCA — Personal Investment Advisor</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getAuth,signInWithPopup,signInWithEmailAndPassword,createUserWithEmailAndPassword,GoogleAuthProvider,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import{getFirestore,collection,addDoc,getDocs,query,where,orderBy,limit,doc,setDoc}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const firebaseConfig={apiKey:"AIzaSyD6a90JiirnLs5_zLuSIxS17IfVelvMfWk",authDomain:"finca-449f6.firebaseapp.com",projectId:"finca-449f6",storageBucket:"finca-449f6.firebasestorage.app",messagingSenderId:"469199163486",appId:"1:469199163486:web:4cb44f5d6e60e56f3b64cf"};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);const db=getFirestore(app);const provider=new GoogleAuthProvider();
+window._auth=auth;window._db=db;window._provider=provider;
+window._signInWithPopup=signInWithPopup;window._signInWithEmailAndPassword=signInWithEmailAndPassword;
+window._createUserWithEmailAndPassword=createUserWithEmailAndPassword;window._signOut=signOut;
+window._addDoc=addDoc;window._getDocs=getDocs;window._query=query;window._where=where;
+window._orderBy=orderBy;window._limit=limit;window._collection=collection;window._doc=doc;window._setDoc=setDoc;
+onAuthStateChanged(auth,user=>{window._currentUser=user;updateNavAuth(user);if(user&&document.getElementById('page-auth')?.classList.contains('active'))goTo('landing');});
+</script>
 <style>
-:root{--bg:#080c18;--surface:#0f1623;--surface2:#162033;--border:#1c2a40;--border2:#243550;--gold:#e8a000;--gold-light:#f5b730;--teal:#00c4a0;--blue:#4a90e2;--red:#e05555;--text:#dde3f0;--text-mid:#8a9ab8;--text-dim:#4a5a78;}
+/* ═══════════════════════════════════════════════
+   THEMES
+═══════════════════════════════════════════════ */
+[data-theme="light"]{
+  --bg:#f8f9fc;--bg2:#ffffff;--bg3:#f1f3f8;
+  --surface:#ffffff;--surface2:#f8f9fc;--surface3:#f1f3f8;
+  --border:#e4e8f0;--border2:#d0d7e8;
+  --text:#0f1729;--text-mid:#4a5578;--text-dim:#9aa3bc;
+  --primary:#2563eb;--primary-light:#dbeafe;--primary-dark:#1d4ed8;
+  --green:#16a34a;--green-light:#dcfce7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --gold:#d97706;--gold-light:#fef3c7;
+  --nav-bg:rgba(255,255,255,0.95);
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.1);
+  --card-border:1px solid #e4e8f0;
+  --tag-bg:#f1f5ff;--tag-text:#3b5bdb;
+}
+[data-theme="navy"]{
+  --bg:#0a0f1e;--bg2:#0f1829;--bg3:#141f35;
+  --surface:#0f1829;--surface2:#141f35;--surface3:#1a2640;
+  --border:#1e2d4a;--border2:#263656;
+  --text:#e8edf8;--text-mid:#7a8fb5;--text-dim:#3d5280;
+  --primary:#d4a017;--primary-light:rgba(212,160,23,.12);--primary-dark:#b8880f;
+  --green:#22c55e;--green-light:rgba(34,197,94,.1);
+  --red:#f87171;--red-light:rgba(248,113,113,.1);
+  --gold:#d4a017;--gold-light:rgba(212,160,23,.12);
+  --nav-bg:rgba(10,15,30,0.95);
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.4);
+  --card-border:1px solid #1e2d4a;
+  --tag-bg:rgba(212,160,23,.1);--tag-text:#d4a017;
+}
+[data-theme="green"]{
+  --bg:#f0faf4;--bg2:#ffffff;--bg3:#e8f5ed;
+  --surface:#ffffff;--surface2:#f0faf4;--surface3:#e8f5ed;
+  --border:#c3e6cf;--border2:#a8d9b8;
+  --text:#0c2e1a;--text-mid:#2d6a42;--text-dim:#6aad82;
+  --primary:#15803d;--primary-light:#dcfce7;--primary-dark:#166534;
+  --green:#15803d;--green-light:#dcfce7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --gold:#d97706;--gold-light:#fef3c7;
+  --nav-bg:rgba(255,255,255,0.95);
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 24px rgba(21,128,61,.12);
+  --card-border:1px solid #c3e6cf;
+  --tag-bg:#dcfce7;--tag-text:#15803d;
+}
+
+/* ═══════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════ */
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;}
-.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:0.25;}
-.page{display:none;min-height:100vh;position:relative;z-index:1;}
-.page.active{display:block;animation:fadeIn 0.4s ease;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(8,12,24,0.92);backdrop-filter:blur(12px);padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between;}
-.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-0.5px;cursor:pointer;}
-.nav-logo span{color:var(--gold);}
-.nav-steps{display:flex;gap:6px;}
-.nav-step{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);padding:6px 14px;border-radius:20px;border:1px solid transparent;cursor:default;transition:all 0.2s;}
-.nav-step.done{color:var(--teal);border-color:var(--teal);cursor:pointer;}
-.nav-step.active{color:var(--gold);border-color:var(--gold);}
-.wrap{max-width:860px;margin:0 auto;padding:100px 32px 60px;}
-.wrap-sm{max-width:640px;margin:0 auto;padding:100px 32px 60px;}
-.hero{padding:60px 0 40px;}
-.hero-tag{font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;display:flex;align-items:center;gap:10px;}
-.hero-tag::before{content:'';width:32px;height:1px;background:var(--gold);}
-.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.4rem,6vw,4rem);line-height:1.1;margin-bottom:24px;}
-.hero-title em{color:var(--gold);font-style:normal;}
-.hero-sub{font-size:0.88rem;color:var(--text-mid);line-height:1.8;max-width:520px;margin-bottom:48px;}
-.btn-primary{background:var(--gold);color:#000;border:none;padding:14px 36px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.04em;border-radius:6px;cursor:pointer;transition:background 0.15s,transform 0.15s;}
-.btn-primary:hover{background:var(--gold-light);transform:translateY(-1px);}
-.btn-secondary{background:transparent;color:var(--text-mid);border:1px solid var(--border2);padding:14px 36px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.9rem;border-radius:6px;cursor:pointer;transition:border-color 0.15s,color 0.15s;margin-left:12px;}
-.btn-secondary:hover{border-color:var(--text-mid);color:var(--text);}
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;}
-.feature{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 22px;transition:border-color 0.2s;}
-.feature:hover{border-color:var(--border2);}
-.feature-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;margin-bottom:8px;}
-.feature-desc{font-size:0.75rem;color:var(--text-mid);line-height:1.7;}
-.data-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:48px;}
-.data-item{background:var(--surface);padding:24px 20px;}
-.data-num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--gold);}
-.data-label{font-size:0.7rem;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;}
-.progress-bar{width:100%;height:3px;background:var(--border);border-radius:2px;margin-bottom:40px;overflow:hidden;}
-.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.5s ease;}
-.form-header{margin-bottom:40px;}
-.form-page-tag{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
-.form-page-title{font-family:'DM Serif Display',serif;font-size:2rem;line-height:1.2;margin-bottom:8px;}
-.form-page-sub{font-size:0.8rem;color:var(--text-mid);}
-.field-group{margin-bottom:20px;}
-.field-label{display:block;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-mid);margin-bottom:8px;}
-.field-hint{font-size:0.7rem;color:var(--text-dim);margin-top:6px;}
-input[type=text],input[type=number],select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:13px 16px;font-family:'DM Mono',monospace;font-size:0.88rem;border-radius:8px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none;}
-input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,160,0,0.12);}
-select option{background:var(--surface2);}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;font-size:14px;line-height:1.5;transition:background .3s,color .3s;}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;line-height:1.2;}
+
+/* ═══════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════ */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--nav-bg);border-bottom:var(--card-border);backdrop-filter:blur(16px);height:60px;display:flex;align-items:center;padding:0 24px;gap:16px;box-shadow:var(--shadow);}
+.nav-logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;}
+.nav-logo-badge{background:var(--primary);color:#fff;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0;}
+.nav-logo em{color:var(--primary);font-style:normal;}
+.nav-sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+.nav-steps{display:flex;gap:2px;flex:1;}
+.nav-step{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:500;color:var(--text-dim);cursor:default;transition:all .2s;border:1px solid transparent;white-space:nowrap;}
+.nav-step .sn{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;}
+.nav-step.done{color:var(--green);cursor:pointer;}
+.nav-step.done:hover{background:var(--green-light);}
+.nav-step.done .sn{background:var(--green);border-color:var(--green);color:#fff;}
+.nav-step.active{color:var(--primary);background:var(--primary-light);border-color:transparent;}
+.nav-step.active .sn{background:var(--primary);border-color:var(--primary);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+
+/* theme switcher */
+.theme-switcher{display:flex;background:var(--bg3);border:var(--card-border);border-radius:8px;padding:3px;gap:3px;}
+.theme-btn{width:20px;height:20px;border-radius:5px;border:none;cursor:pointer;transition:all .2s;position:relative;}
+.theme-btn.active::after{content:'';position:absolute;inset:-2px;border-radius:7px;border:2px solid var(--primary);}
+.theme-btn-light{background:linear-gradient(135deg,#fff 50%,#e4e8f0 50%);}
+.theme-btn-navy{background:linear-gradient(135deg,#0a0f1e 50%,#d4a017 50%);}
+.theme-btn-green{background:linear-gradient(135deg,#f0faf4 50%,#15803d 50%);}
+
+/* auth nav */
+.nav-auth{display:flex;align-items:center;gap:8px;}
+.nav-user-info{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--text-mid);font-weight:500;}
+.nav-avatar{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;}
+.btn-sm{padding:6px 14px;border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;border:none;}
+.btn-primary-sm{background:var(--primary);color:#fff;}
+.btn-primary-sm:hover{background:var(--primary-dark);transform:translateY(-1px);}
+.btn-ghost-sm{background:transparent;color:var(--text-mid);border:var(--card-border);}
+.btn-ghost-sm:hover{color:var(--text);border-color:var(--border2);}
+.btn-danger-sm{background:transparent;color:var(--red);border:1px solid var(--red-light);}
+.btn-danger-sm:hover{background:var(--red-light);}
+
+/* ═══════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════ */
+.page{display:none;min-height:100vh;padding-top:60px;}
+.page.active{display:block;animation:fadeUp .35s cubic-bezier(.16,1,.3,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ═══════════════════════════════════════════════
+   LANDING
+═══════════════════════════════════════════════ */
+.landing-hero{background:var(--surface);border-bottom:var(--card-border);padding:64px 24px 56px;}
+.landing-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:64px;align-items:center;}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--tag-bg);color:var(--tag-text);font-size:.72rem;font-weight:600;padding:5px 12px;border-radius:20px;margin-bottom:20px;letter-spacing:.02em;}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.hero-title{font-size:clamp(2rem,4vw,3rem);font-weight:800;color:var(--text);margin-bottom:16px;letter-spacing:-.02em;}
+.hero-title em{color:var(--primary);font-style:normal;}
+.hero-desc{font-size:.9rem;color:var(--text-mid);line-height:1.8;margin-bottom:32px;max-width:480px;}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-cta{padding:13px 28px;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-family:'Inter',sans-serif;}
+.btn-cta-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.25);}
+.btn-cta-primary:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.3);}
+.btn-cta-secondary{background:var(--bg3);color:var(--text);border:var(--card-border);}
+.btn-cta-secondary:hover{background:var(--bg2);border-color:var(--border2);}
+
+/* hero card */
+.hero-card{background:var(--bg3);border:var(--card-border);border-radius:16px;padding:24px;box-shadow:var(--shadow-lg);}
+.hero-card-title{font-size:.7rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;}
+.hero-stat-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:var(--card-border);}
+.hero-stat-row:last-of-type{border-bottom:none;}
+.hsr-label{font-size:.78rem;color:var(--text-mid);}
+.hsr-val{font-size:.88rem;font-weight:700;color:var(--text);}
+.hsr-val.green{color:var(--green);}
+.hsr-val.primary{color:var(--primary);}
+.hero-corpus{background:var(--primary);border-radius:12px;padding:18px;margin-top:16px;text-align:center;}
+.hero-corpus-label{font-size:.68rem;color:rgba(255,255,255,.7);margin-bottom:4px;font-weight:500;}
+.hero-corpus-val{font-size:1.6rem;font-weight:800;color:#fff;}
+.hero-corpus-sub{font-size:.68rem;color:rgba(255,255,255,.6);margin-top:3px;}
+
+/* stats row */
+.stats-row{max-width:1100px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.stat-card{background:var(--surface);border:var(--card-border);border-radius:12px;padding:20px;box-shadow:var(--shadow);transition:all .2s;}
+.stat-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+.stat-num{font-size:1.6rem;font-weight:800;color:var(--primary);font-family:'Bricolage Grotesque',sans-serif;}
+.stat-label{font-size:.72rem;color:var(--text-dim);margin-top:4px;font-weight:500;}
+
+/* features */
+.features-section{max-width:1100px;margin:0 auto;padding:0 24px 64px;}
+.section-title{font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.section-sub{font-size:.85rem;color:var(--text-mid);margin-bottom:28px;}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.feature-card{background:var(--surface);border:var(--card-border);border-radius:12px;padding:24px;transition:all .2s;box-shadow:var(--shadow);}
+.feature-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+.feature-icon{width:40px;height:40px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:14px;}
+.feature-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.feature-desc{font-size:.78rem;color:var(--text-mid);line-height:1.7;}
+
+/* ═══════════════════════════════════════════════
+   FORMS
+═══════════════════════════════════════════════ */
+.form-layout{max-width:680px;margin:0 auto;padding:40px 24px 80px;}
+.form-progress{margin-bottom:32px;}
+.progress-steps{display:flex;gap:0;margin-bottom:10px;}
+.ps-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.ps-item:not(:last-child)::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.ps-item.done:not(:last-child)::after,.ps-item.active:not(:last-child)::after{background:var(--primary);}
+.ps-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--text-dim);z-index:1;transition:all .3s;}
+.ps-item.done .ps-circle{background:var(--green);border-color:var(--green);color:#fff;}
+.ps-item.active .ps-circle{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 4px var(--primary-light);}
+.ps-label{font-size:.65rem;color:var(--text-dim);margin-top:6px;font-weight:500;}
+.ps-item.active .ps-label{color:var(--primary);font-weight:700;}
+.ps-item.done .ps-label{color:var(--green);}
+.form-header{margin-bottom:28px;}
+.form-step-tag{font-size:.7rem;font-weight:600;color:var(--primary);background:var(--primary-light);padding:4px 10px;border-radius:6px;display:inline-block;margin-bottom:10px;}
+.form-title{font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:6px;}
+.form-sub{font-size:.82rem;color:var(--text-mid);}
+
+/* inputs */
+.field{margin-bottom:18px;}
+.field-label{display:block;font-size:.75rem;font-weight:600;color:var(--text);margin-bottom:6px;}
+.field-hint{font-size:.7rem;color:var(--text-dim);margin-top:4px;}
+.field-error{font-size:.7rem;color:var(--red);margin-top:4px;display:none;}
+.field.has-error .field-error{display:block;}
+.field.has-error input,.field.has-error select{border-color:var(--red);box-shadow:0 0 0 3px var(--red-light);}
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.radio-group{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.radio-option{border:1px solid var(--border);border-radius:8px;padding:16px 14px;cursor:pointer;transition:all 0.2s;text-align:center;}
-.radio-option:hover{border-color:var(--border2);}
-.radio-option.selected{border-color:var(--gold);background:rgba(232,160,0,0.07);}
-.radio-option input{display:none;}
-.radio-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;margin-bottom:4px;}
-.radio-desc{font-size:0.68rem;color:var(--text-dim);}
-.form-nav{display:flex;justify-content:space-between;align-items:center;margin-top:36px;}
-.back-btn{background:none;border:none;color:var(--text-mid);font-family:'DM Mono',monospace;font-size:0.8rem;cursor:pointer;transition:color 0.15s;}
-.back-btn:hover{color:var(--text);}
-.loan-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;}
-.loan-remove{background:none;border:1px solid var(--border);color:var(--text-dim);width:36px;height:36px;border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
-.loan-remove:hover{border-color:var(--red);color:var(--red);}
-.add-btn{background:none;border:1px dashed var(--border2);color:var(--text-mid);width:100%;padding:12px;border-radius:8px;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.78rem;letter-spacing:0.05em;transition:all 0.15s;}
-.add-btn:hover{border-color:var(--gold);color:var(--gold);}
-.results-header{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;margin-bottom:20px;}
-.results-name{font-family:'DM Serif Display',serif;font-size:1.9rem;margin-bottom:6px;}
-.results-meta{font-size:0.75rem;color:var(--text-mid);line-height:1.8;}
-.section-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+input[type=text],input[type=number],input[type=email],input[type=password],select{
+  width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);
+  padding:11px 14px;font-family:'Inter',sans-serif;font-size:.85rem;border-radius:9px;
+  outline:none;transition:all .2s;-webkit-appearance:none;
+}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light);}
+input::placeholder{color:var(--text-dim);}
+select option{background:var(--surface);}
+
+/* radio cards */
+.radio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.radio-card{border:1.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;background:var(--surface);}
+.radio-card:hover{border-color:var(--border2);background:var(--bg3);}
+.radio-card.selected{border-color:var(--primary);background:var(--primary-light);}
+.radio-card input{display:none;}
+.rc-title{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.rc-desc{font-size:.7rem;color:var(--text-dim);line-height:1.5;}
+.radio-card.selected .rc-title{color:var(--primary);}
+
+/* surplus preview */
+.surplus-box{background:var(--bg3);border:var(--card-border);border-radius:10px;padding:16px;margin-top:14px;display:none;}
+.surplus-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:var(--card-border);}
+.surplus-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px;}
+.sr-label{font-size:.78rem;color:var(--text-mid);}
+.sr-val{font-size:.82rem;font-weight:700;}
+
+/* loans */
+.loan-card{background:var(--surface);border:var(--card-border);border-radius:10px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;animation:fadeUp .2s ease;}
+.btn-remove{width:36px;height:36px;border-radius:8px;border:var(--card-border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .15s;}
+.btn-remove:hover{border-color:var(--red);color:var(--red);background:var(--red-light);}
+.btn-add-loan{width:100%;padding:13px;border:1.5px dashed var(--border2);border-radius:10px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:500;transition:all .2s;margin-top:4px;}
+.btn-add-loan:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+.no-loans-box{background:var(--bg3);border:var(--card-border);border-radius:10px;padding:18px;margin-top:14px;}
+.nlb-title{font-size:.72rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.nlb-body{font-size:.8rem;color:var(--text-mid);}
+
+/* form nav */
+.form-nav{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:var(--card-border);}
+.btn-back{background:none;border:none;color:var(--text-mid);font-family:'Inter',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s;}
+.btn-back:hover{color:var(--text);}
+.btn-next{padding:12px 28px;background:var(--primary);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+.btn-next:hover{background:var(--primary-dark);transform:translateY(-1px);}
+.btn-generate{background:var(--green);box-shadow:0 4px 14px rgba(22,163,74,.2);}
+.btn-generate:hover{background:#15803d;box-shadow:0 6px 20px rgba(22,163,74,.3);}
+
+/* ═══════════════════════════════════════════════
+   RESULTS
+═══════════════════════════════════════════════ */
+.results-layout{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+
+/* result header */
+.result-header{background:var(--surface);border:var(--card-border);border-radius:16px;padding:28px 32px;margin-bottom:20px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start;}
+.rh-name{font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:6px;}
+.rh-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.rh-tag{background:var(--bg3);border:var(--card-border);border-radius:6px;padding:4px 10px;font-size:.7rem;font-weight:500;color:var(--text-mid);}
+.rh-tag.green{background:var(--green-light);color:var(--green);border-color:transparent;}
+.rh-tag.primary{background:var(--primary-light);color:var(--primary);border-color:transparent;}
+
+/* health score */
+.health-ring{position:relative;width:80px;height:80px;flex-shrink:0;}
+.health-ring svg{transform:rotate(-90deg);}
+.hr-bg{fill:none;stroke:var(--border);stroke-width:7;}
+.hr-fg{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset 1.5s cubic-bezier(.16,1,.3,1);}
+.hr-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;line-height:1;}
+.hr-label-sm{font-size:.5rem;color:var(--text-dim);margin-top:2px;font-weight:500;}
+.health-score-block{display:flex;align-items:center;gap:14px;}
+.hs-info .hs-title{font-size:.72rem;color:var(--text-dim);font-weight:500;margin-bottom:2px;}
+.hs-info .hs-grade{font-size:1rem;font-weight:800;}
+.hs-info .hs-sub{font-size:.68rem;color:var(--text-dim);margin-top:2px;max-width:160px;line-height:1.5;}
+
+/* alerts */
+.alert{border-radius:10px;padding:13px 16px;margin-bottom:10px;font-size:.8rem;line-height:1.7;display:flex;gap:10px;align-items:flex-start;}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+.alert-body strong{display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.alert.warn{background:var(--red-light);color:var(--red);}
+.alert.success{background:var(--green-light);color:var(--green);}
+.alert.info{background:var(--primary-light);color:var(--primary);}
+.alert.gold{background:var(--gold-light);color:var(--gold);}
+
+/* kpi grid */
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 18px;transition:border-color 0.2s;}
-.kpi.accent{border-color:var(--teal);}
-.kpi-label{font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
-.kpi-val{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;}
+.kpi-card{background:var(--surface);border:var(--card-border);border-radius:12px;padding:20px;box-shadow:var(--shadow);transition:all .2s;}
+.kpi-card:hover{box-shadow:var(--shadow-lg);}
+.kpi-card.accent-green{border-left:3px solid var(--green);}
+.kpi-card.accent-primary{border-left:3px solid var(--primary);}
+.kpi-card.accent-gold{border-left:3px solid var(--gold);}
+.kpi-label{font-size:.7rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.kpi-val{font-size:1.25rem;font-weight:800;color:var(--text);font-family:'Bricolage Grotesque',sans-serif;}
+.kpi-val.green{color:var(--green);}
+.kpi-val.primary{color:var(--primary);}
 .kpi-val.gold{color:var(--gold);}
-.kpi-val.teal{color:var(--teal);}
-.kpi-sub{font-size:0.68rem;color:var(--text-dim);margin-top:5px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:16px;}
-.bar-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
-.bar-lbl{width:120px;font-size:0.7rem;color:var(--text-mid);flex-shrink:0;text-transform:uppercase;letter-spacing:0.06em;}
-.bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:32px;position:relative;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);display:flex;align-items:center;padding-left:10px;font-size:0.72rem;font-weight:500;white-space:nowrap;overflow:hidden;}
-.goal-marker{position:absolute;top:0;bottom:0;width:2px;z-index:2;background:var(--gold);}
-.goal-marker-label{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-size:0.58rem;color:var(--gold);white-space:nowrap;letter-spacing:0.1em;text-transform:uppercase;}
-.alloc-list{display:flex;flex-direction:column;gap:12px;}
-.alloc-item{display:flex;align-items:center;gap:12px;}
-.alloc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.alloc-name{flex:1;font-size:0.78rem;color:var(--text-mid);text-transform:capitalize;}
-.alloc-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:0.9rem;width:36px;text-align:right;}
-.alloc-bar-bg{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:4px;}
-.alloc-bar-fg{height:100%;border-radius:2px;transition:width 1s ease;}
-.alert{border-radius:8px;padding:16px 20px;margin-bottom:14px;font-size:0.8rem;line-height:1.7;border-left:3px solid;}
-.alert.warn{background:rgba(224,85,85,0.08);border-color:var(--red);color:#ffb3b3;}
-.alert.success{background:rgba(0,196,160,0.08);border-color:var(--teal);color:#a0ffe8;}
-.alert.info{background:rgba(232,160,0,0.08);border-color:var(--gold);color:#ffe0a0;}
-.alert strong{display:block;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px;}
-.tab-nav{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;}
-.tab-btn{background:none;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;white-space:nowrap;flex-shrink:0;}
-.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
-.tab-btn:hover:not(.active){color:var(--text-mid);}
+.kpi-sub{font-size:.68rem;color:var(--text-dim);margin-top:5px;line-height:1.5;}
+
+/* tabs */
+.tab-nav{display:flex;gap:2px;background:var(--bg3);border:var(--card-border);border-radius:10px;padding:4px;margin-bottom:20px;overflow-x:auto;}
+.tab-btn{flex:1;padding:9px 12px;border:none;background:transparent;border-radius:7px;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:600;color:var(--text-mid);cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;}
+.tab-btn.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow);}
+.tab-btn:hover:not(.active){color:var(--text);}
 .tab-panel{display:none;}
-.tab-panel.active{display:block;animation:fadeIn 0.3s ease;}
-.expense-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
-.expense-row:last-child{border-bottom:none;}
-.expense-cat{font-size:0.78rem;color:var(--text-mid);}
-.expense-amt{font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:600;}
-.expense-pct{font-size:0.68rem;color:var(--text-dim);margin-top:2px;}
-footer{text-align:center;padding:40px 0;color:var(--text-dim);font-size:0.68rem;letter-spacing:0.12em;border-top:1px solid var(--border);position:relative;z-index:1;}
-.wi-bucket{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
-.wi-bucket-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;background:var(--surface);transition:background .15s;user-select:none;}
-.wi-bucket-hd:hover{background:var(--surface2);}
+.tab-panel.active{display:block;animation:fadeUp .25s ease;}
+
+/* result cards */
+.r-card{background:var(--surface);border:var(--card-border);border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:var(--shadow);}
+.r-card-title{font-size:.72rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.r-card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* corpus bars */
+.corpus-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.cbr-label{width:100px;font-size:.75rem;font-weight:600;color:var(--text-mid);flex-shrink:0;}
+.cbr-track{flex:1;background:var(--bg3);border-radius:6px;height:38px;position:relative;overflow:hidden;}
+.cbr-fill{height:100%;border-radius:6px;width:0;transition:width 1.4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;padding-left:12px;font-size:.75rem;font-weight:600;white-space:nowrap;}
+.cbr-val{width:110px;text-align:right;font-size:.78rem;font-weight:700;flex-shrink:0;}
+.goal-line{position:absolute;top:0;bottom:0;width:2px;background:var(--gold);z-index:2;}
+.goal-line-label{position:absolute;bottom:calc(100%+3px);left:50%;transform:translateX(-50%);font-size:.55rem;font-weight:700;color:var(--gold);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;}
+
+/* charts */
+.chart-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.chart-box{background:var(--bg3);border:var(--card-border);border-radius:10px;padding:18px;}
+.chart-box-title{font-size:.7rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+.chart-wrap{position:relative;}
+
+/* milestones */
+.milestone-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:var(--card-border);border-radius:10px;overflow:hidden;margin-top:20px;}
+.milestone-cell{background:var(--surface);padding:14px;text-align:center;}
+.mc-age{font-size:.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.mc-val{font-size:.9rem;font-weight:800;color:var(--green);font-family:'Bricolage Grotesque',sans-serif;}
+.mc-yr{font-size:.62rem;color:var(--text-dim);margin-top:2px;}
+
+/* allocation */
+.alloc-table{width:100%;}
+.alloc-tr{display:grid;grid-template-columns:14px 1fr 60px 80px;align-items:center;gap:12px;padding:12px 0;border-bottom:var(--card-border);}
+.alloc-tr:last-child{border-bottom:none;}
+.alloc-dot{width:10px;height:10px;border-radius:3px;}
+.alloc-name{font-size:.82rem;font-weight:500;color:var(--text);text-transform:capitalize;}
+.alloc-pct{font-size:.82rem;font-weight:700;text-align:right;}
+.alloc-amt{font-size:.75rem;color:var(--text-mid);text-align:right;}
+.alloc-bar-row{grid-column:1/-1;margin-top:-8px;}
+.alloc-bar-bg{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.alloc-bar-fg{height:100%;border-radius:2px;transition:width 1.2s ease;}
+
+/* pie + table layout */
+.pie-table-layout{display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;}
+
+/* expense rows */
+.exp-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:var(--card-border);}
+.exp-row:last-child{border-bottom:none;}
+.er-left{display:flex;align-items:center;gap:10px;}
+.er-dot{width:8px;height:8px;border-radius:50%;}
+.er-label{font-size:.8rem;color:var(--text-mid);}
+.er-pct{font-size:.68rem;color:var(--text-dim);margin-top:1px;}
+.er-amt{font-size:.85rem;font-weight:700;color:var(--text);}
+
+/* tax */
+.tax-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+.tax-body-text{font-size:.82rem;color:var(--text-mid);line-height:1.85;background:var(--bg3);border-radius:10px;padding:16px;}
+
+/* action plan */
+.action-list{display:flex;flex-direction:column;gap:10px;}
+.action-item{display:flex;gap:14px;background:var(--surface);border:var(--card-border);border-radius:10px;padding:16px;transition:all .2s;}
+.action-item:hover{box-shadow:var(--shadow);}
+.action-item.urgent{border-left:3px solid var(--red);background:var(--red-light);}
+.action-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0;color:#fff;}
+.action-num.primary{background:var(--primary);}
+.action-num.green{background:var(--green);}
+.action-num.red{background:var(--red);}
+.action-num.gold{background:var(--gold);}
+.action-body .action-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.action-body .action-desc{font-size:.78rem;color:var(--text-mid);line-height:1.7;}
+.action-body .action-when{font-size:.68rem;color:var(--text-dim);margin-top:5px;display:flex;align-items:center;gap:4px;}
+
+/* where to invest */
+.wi-disclaimer{background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:14px 16px;font-size:.75rem;color:var(--gold);margin-bottom:16px;line-height:1.7;}
+.wi-bucket{border:var(--card-border);border-radius:12px;overflow:hidden;margin-bottom:10px;background:var(--surface);transition:box-shadow .2s;}
+.wi-bucket:hover{box-shadow:var(--shadow);}
+.wi-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;transition:background .15s;}
+.wi-hd:hover{background:var(--bg3);}
 .wi-hd-left{display:flex;align-items:center;gap:12px;}
-.wi-dot{width:11px;height:11px;border-radius:50%;}
-.wi-hd-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;}
-.wi-hd-sub{font-size:.65rem;color:var(--text-dim);margin-top:2px;}
+.wi-color-bar{width:4px;height:36px;border-radius:2px;}
+.wi-hd-title{font-size:.88rem;font-weight:700;color:var(--text);}
+.wi-hd-sub{font-size:.68rem;color:var(--text-dim);margin-top:2px;}
 .wi-hd-right{display:flex;align-items:center;gap:12px;}
-.wi-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--gold);}
-.wi-pct-badge{font-size:.62rem;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
-.wi-chevron{font-size:.7rem;color:var(--text-dim);transition:transform .2s;}
-.wi-chevron.open{transform:rotate(180deg);}
-.wi-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--border);background:var(--bg);}
-.wi-body.open{display:block;animation:fadeIn .2s ease;}
-.wi-split{font-size:.72rem;color:var(--text-mid);margin-bottom:14px;line-height:1.7;}
-.wi-split strong{color:var(--text);}
-.wi-section-title{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);margin:14px 0 8px;display:flex;align-items:center;gap:8px;}
-.wi-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
-.wi-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:4px;}
-.wi-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:14px;position:relative;transition:border-color .15s;}
-.wi-card:hover{border-color:var(--border2);}
-.wi-card.pick{border-color:var(--teal);}
-.wi-card.pick::after{content:'TOP PICK';position:absolute;top:0;right:12px;font-size:.5rem;letter-spacing:.12em;background:var(--teal);color:#000;padding:2px 7px;border-radius:0 0 5px 5px;font-weight:700;}
-.wi-card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;line-height:1.35;margin-bottom:6px;padding-right:4px;}
-.wi-tag{display:inline-block;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;font-weight:700;margin-bottom:8px;}
-.wi-stat{font-size:.68rem;color:var(--text-mid);line-height:1.8;}
-.wi-stat b{color:var(--text);}
-.wi-platform{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
-.wi-platform-label{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.07em;}
-.wi-platform-val{font-size:.64rem;color:var(--teal);font-weight:600;}
-.wi-why{font-size:.73rem;color:var(--text-mid);line-height:1.75;background:rgba(232,160,0,.05);border:1px solid rgba(232,160,0,.12);border-radius:7px;padding:11px 14px;margin-top:12px;}
-.wi-why b{color:var(--gold);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:3px;}
-.wi-disclaimer{font-size:.65rem;color:var(--text-dim);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;line-height:1.7;}
-.wi-disclaimer b{color:var(--text-mid);}
-@media(max-width:640px){.features{grid-template-columns:1fr;}.data-strip{grid-template-columns:1fr 1fr;}.field-grid{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:1fr 1fr;}.radio-group{grid-template-columns:1fr;}.loan-row{grid-template-columns:1fr 1fr;}nav{padding:0 16px;}.wrap,.wrap-sm{padding:90px 16px 60px;}}
+.wi-amt{font-size:.95rem;font-weight:800;color:var(--primary);}
+.wi-badge{background:var(--bg3);border:var(--card-border);border-radius:6px;padding:3px 9px;font-size:.68rem;color:var(--text-dim);font-weight:600;}
+.wi-chev{font-size:.7rem;color:var(--text-dim);transition:transform .2s;}
+.wi-chev.open{transform:rotate(180deg);}
+.wi-body{display:none;padding:20px;border-top:var(--card-border);background:var(--bg3);}
+.wi-body.open{display:block;animation:fadeUp .2s ease;}
+.wi-split-note{background:var(--surface);border:var(--card-border);border-radius:8px;padding:12px 14px;font-size:.78rem;color:var(--text-mid);margin-bottom:16px;line-height:1.75;}
+.wi-section-hd{font-size:.66rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;display:flex;align-items:center;gap:8px;}
+.wi-section-hd::after{content:'';flex:1;height:1px;background:var(--border);}
+.wi-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.wi-card{background:var(--surface);border:var(--card-border);border-radius:10px;padding:16px;transition:all .2s;position:relative;}
+.wi-card:hover{box-shadow:var(--shadow);border-color:var(--border2);}
+.wi-card.top-pick{border-color:var(--primary);}
+.wi-card.top-pick::before{content:'TOP PICK';position:absolute;top:0;right:12px;background:var(--primary);color:#fff;font-size:.5rem;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:0 0 6px 6px;}
+.wc-name{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:7px;line-height:1.4;}
+.wc-tag{display:inline-block;font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-bottom:9px;}
+.wc-stats{font-size:.72rem;color:var(--text-mid);line-height:1.8;}
+.wc-stats b{color:var(--text);font-weight:600;}
+.wc-platform{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:var(--card-border);}
+.wcp-label{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;}
+.wcp-val{font-size:.68rem;font-weight:600;color:var(--primary);}
+.wc-note{font-size:.65rem;color:var(--text-dim);margin-top:8px;line-height:1.6;}
+.wi-why{background:var(--surface);border-left:3px solid var(--primary);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:14px;font-size:.78rem;color:var(--text-mid);line-height:1.8;}
+.wi-why b{display:block;font-size:.65rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+
+/* auth page */
+.auth-layout{max-width:420px;margin:0 auto;padding:60px 24px;}
+.auth-header{text-align:center;margin-bottom:32px;}
+.auth-logo-big{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:2rem;color:var(--text);margin-bottom:6px;}
+.auth-logo-big em{color:var(--primary);font-style:normal;}
+.auth-tagline{font-size:.82rem;color:var(--text-mid);}
+.auth-card{background:var(--surface);border:var(--card-border);border-radius:16px;padding:28px;box-shadow:var(--shadow-lg);}
+.auth-tabs{display:flex;gap:2px;background:var(--bg3);border-radius:8px;padding:3px;margin-bottom:22px;}
+.auth-tab{flex:1;padding:8px;border:none;background:transparent;border-radius:6px;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+.auth-tab.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow);}
+.auth-panel{display:none;}
+.auth-panel.active{display:block;animation:fadeUp .2s ease;}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:.72rem;color:var(--text-dim);}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.btn-google{width:100%;padding:11px;background:var(--surface);border:var(--card-border);border-radius:9px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-google:hover{border-color:var(--primary);background:var(--primary-light);}
+.auth-error{font-size:.75rem;color:var(--red);background:var(--red-light);border-radius:7px;padding:10px 12px;margin-top:10px;display:none;}
+.auth-error.show{display:block;}
+.auth-footer{text-align:center;margin-top:18px;font-size:.75rem;color:var(--text-dim);}
+.auth-footer a{color:var(--primary);cursor:pointer;font-weight:600;}
+.btn-full{width:100%;padding:12px;border-radius:9px;font-family:'Inter',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;border:none;margin-top:6px;}
+.btn-full-primary{background:var(--primary);color:#fff;}
+.btn-full-primary:hover{background:var(--primary-dark);}
+
+/* history modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;animation:fadeUp .2s ease;}
+.modal-box{background:var(--surface);border:var(--card-border);border-radius:16px;padding:28px;width:100%;max-width:540px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-size:1.1rem;font-weight:800;color:var(--text);}
+.modal-close{background:none;border:none;font-size:1.1rem;color:var(--text-dim);cursor:pointer;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-close:hover{background:var(--bg3);color:var(--text);}
+.hist-item{background:var(--bg3);border:var(--card-border);border-radius:10px;padding:16px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.hist-item:hover{border-color:var(--primary);box-shadow:var(--shadow);}
+.hist-date{font-size:.65rem;color:var(--text-dim);font-weight:500;margin-bottom:4px;}
+.hist-name{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.hist-meta{font-size:.72rem;color:var(--text-mid);}
+.hist-corpus{font-size:.9rem;font-weight:800;color:var(--green);margin-top:6px;}
+.hist-empty{text-align:center;color:var(--text-dim);font-size:.82rem;padding:40px 0;}
+
+/* save toast */
+.save-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);z-index:150;background:var(--green);color:#fff;border-radius:10px;padding:10px 20px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(22,163,74,.3);transition:transform .35s cubic-bezier(.16,1,.3,1);pointer-events:none;}
+.save-toast.show{transform:translateX(-50%) translateY(0);}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--surface);border:var(--card-border);border-radius:10px;padding:12px 18px;font-size:.8rem;color:var(--text);box-shadow:var(--shadow-lg);transform:translateY(60px);opacity:0;transition:all .3s;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* bottom action bar */
+.result-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.btn-outline{padding:10px 22px;border-radius:9px;border:var(--card-border);background:transparent;color:var(--text-mid);font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-outline:hover{border-color:var(--border2);color:var(--text);}
+
+/* responsive */
+@media(max-width:768px){
+  .landing-inner{grid-template-columns:1fr;}
+  .hero-card{display:none;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .features-grid{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .field-grid{grid-template-columns:1fr;}
+  .radio-grid{grid-template-columns:1fr;}
+  .pie-table-layout{grid-template-columns:1fr;}
+  .chart-2col{grid-template-columns:1fr;}
+  .milestone-row{grid-template-columns:repeat(2,1fr);}
+  .loan-card{grid-template-columns:1fr 1fr;}
+  nav{padding:0 14px;}
+  .nav-steps{display:none;}
+  .tax-grid{grid-template-columns:1fr;}
+  .result-header{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
-<div class="grid-bg"></div>
+<div class="toast" id="toast"></div>
+<div class="save-toast" id="save-toast">✓ Report saved to your account</div>
 
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal" onclick="if(event.target===this)closeHistory()">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-title">Report History</div>
+      <button class="modal-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="history-list"><div class="hist-empty">Loading...</div></div>
+  </div>
+</div>
+
+<!-- NAV -->
 <nav>
-  <div class="nav-logo" onclick="goTo('landing')">Fin<span>CA</span></div>
+  <div class="nav-logo" onclick="goTo('landing')">
+    <div class="nav-logo-badge">F</div>
+    Fin<em>CA</em>
+  </div>
+  <div class="nav-sep"></div>
   <div class="nav-steps">
-    <div class="nav-step" id="step-1">Profile</div>
-    <div class="nav-step" id="step-2">Expenses</div>
-    <div class="nav-step" id="step-3">Loans</div>
-    <div class="nav-step" id="step-4">Report</div>
+    <div class="nav-step" id="step-1"><span class="sn">1</span>Profile</div>
+    <div class="nav-step" id="step-2"><span class="sn">2</span>Expenses</div>
+    <div class="nav-step" id="step-3"><span class="sn">3</span>Loans</div>
+    <div class="nav-step" id="step-4"><span class="sn">4</span>Report</div>
+  </div>
+  <div class="nav-right">
+    <div class="theme-switcher">
+      <button class="theme-btn theme-btn-light active" id="tb-light" onclick="setTheme('light',this)" title="Light"></button>
+      <button class="theme-btn theme-btn-navy" id="tb-navy" onclick="setTheme('navy',this)" title="Navy"></button>
+      <button class="theme-btn theme-btn-green" id="tb-green" onclick="setTheme('green',this)" title="Green"></button>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-auth" id="nav-auth">
+      <button class="btn-sm btn-primary-sm" onclick="goTo('auth')">Sign In</button>
+    </div>
   </div>
 </nav>
 
-<!-- LANDING PAGE -->
+<!-- ══════ LANDING ══════ -->
 <div class="page active" id="page-landing">
-<div class="wrap">
-  <div class="hero">
-    <div class="hero-tag">India's data-driven investment advisor</div>
-    <h1 class="hero-title">Know exactly where<br>your money <em>should go.</em></h1>
-    <p class="hero-sub">FinCA uses 10 years of real Indian market data — Nifty 50, gold prices, RBI inflation, AMFI mutual funds — to build a personalised investment plan based on your actual life, expenses, and goals.</p>
-    <button class="btn-primary" onclick="goTo('profile')">Get My Investment Plan</button>
-    <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How It Works</button>
-  </div>
-
-  <div class="data-strip">
-    <div class="data-item"><div class="data-num">10Y</div><div class="data-label">Market Data</div></div>
-    <div class="data-item"><div class="data-num">800+</div><div class="data-label">Simulations</div></div>
-    <div class="data-item"><div class="data-num">6</div><div class="data-label">Life Factors</div></div>
-    <div class="data-item"><div class="data-num">5</div><div class="data-label">Asset Classes</div></div>
-  </div>
-
-  <div id="how" style="margin-top:64px;">
-    <div class="section-label">What FinCA analyses</div>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-title">Real expenses</div>
-        <div class="feature-desc">Calculates your actual investable surplus after rent, EMIs, groceries, dependents, and lifestyle. No flat 20% assumption.</div>
+  <div class="landing-hero">
+    <div class="landing-inner">
+      <div>
+        <div class="hero-tag"><span class="hero-dot"></span>India's data-driven investment advisor</div>
+        <h1 class="hero-title">Know exactly where<br>your money <em>should go.</em></h1>
+        <p class="hero-desc">FinCA uses 10 years of real Indian market data — Nifty 50, gold, RBI inflation, AMFI mutual funds — to build a personalised investment plan based on your actual income, expenses, and goals.</p>
+        <div class="hero-cta">
+          <button class="btn-cta btn-cta-primary" onclick="goTo('profile')">Get My Free Plan →</button>
+          <button class="btn-cta btn-cta-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">How It Works</button>
+        </div>
       </div>
-      <div class="feature">
-        <div class="feature-title">Monte Carlo engine</div>
-        <div class="feature-desc">Runs 800 market simulations showing worst, likely, and best case retirement outcomes based on real Nifty 50 volatility data.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Income growth model</div>
-        <div class="feature-desc">Shows how your corpus grows as your salary increases over time — not just a static SIP assumption for the next 35 years.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Loan detection</div>
-        <div class="feature-desc">Flags high-interest loans above 12% and removes that EMI burden before calculating your investable amount.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Education fund</div>
-        <div class="feature-desc">Projects future education costs for child dependents using historical CPI inflation data from the Reserve Bank of India.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Tax optimisation</div>
-        <div class="feature-desc">Detects your tax bracket and shows exactly how much you can save through ELSS investments under Section 80C.</div>
+      <div class="hero-card">
+        <div class="hero-card-title">Sample Report Preview</div>
+        <div class="hero-stat-row"><span class="hsr-label">Monthly SIP</span><span class="hsr-val primary">₹22,960</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Years to Retirement</span><span class="hsr-val">34 years</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Portfolio Return (est.)</span><span class="hsr-val green">13.68% p.a.</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Goal Status</span><span class="hsr-val green">✓ On Track</span></div>
+        <div class="hero-corpus">
+          <div class="hero-corpus-label">Projected Retirement Corpus</div>
+          <div class="hero-corpus-val">₹2.06 Cr</div>
+          <div class="hero-corpus-sub">50th percentile · 800 simulations</div>
+        </div>
       </div>
     </div>
   </div>
-
-  <div style="text-align:center;margin-top:64px;padding-top:48px;border-top:1px solid var(--border);">
-    <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:20px;letter-spacing:0.12em;text-transform:uppercase;">Data sourced from</div>
-    <div style="display:flex;justify-content:center;gap:28px;flex-wrap:wrap;">
-      <span style="font-size:0.78rem;color:var(--text-mid);">NSE India</span>
-      <span style="color:var(--border2);">|</span>
-      <span style="font-size:0.78rem;color:var(--text-mid);">MCX India</span>
-      <span style="color:var(--border2);">|</span>
-      <span style="font-size:0.78rem;color:var(--text-mid);">Reserve Bank of India</span>
-      <span style="color:var(--border2);">|</span>
-      <span style="font-size:0.78rem;color:var(--text-mid);">AMFI India</span>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">10Y</div><div class="stat-label">Historical Market Data</div></div>
+    <div class="stat-card"><div class="stat-num">800</div><div class="stat-label">Monte Carlo Simulations</div></div>
+    <div class="stat-card"><div class="stat-num">5</div><div class="stat-label">Asset Classes Covered</div></div>
+    <div class="stat-card"><div class="stat-num">100%</div><div class="stat-label">Private — No Data Sent</div></div>
+  </div>
+  <div class="features-section" id="features">
+    <div class="section-title">What FinCA analyses for you</div>
+    <div class="section-sub">Six factors that most investment apps ignore — all calculated from your real numbers.</div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">💰</div><div class="feature-title">Real surplus calculation</div><div class="feature-desc">Calculates your actual investable amount after rent, EMIs, groceries, dependents and lifestyle — not a flat 20% assumption.</div></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Monte Carlo engine</div><div class="feature-desc">Runs 800 market simulations showing worst, likely, and best case retirement outcomes based on real Nifty 50 volatility data.</div></div>
+      <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Income growth model</div><div class="feature-desc">Projects your corpus as salary increases each year — not a static SIP assumption for the next 35 years.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Loan detection</div><div class="feature-desc">Flags high-interest loans above 12% and removes that EMI burden before computing your investable amount.</div></div>
+      <div class="feature-card"><div class="feature-icon">🏥</div><div class="feature-title">Health & protection</div><div class="feature-desc">Recommends exact health insurance plans matched to your age, dependents, and health profile with current estimates.</div></div>
+      <div class="feature-card"><div class="feature-icon">🧾</div><div class="feature-title">Tax optimisation</div><div class="feature-desc">Detects your tax bracket and shows exactly how much you save through ELSS under 80C and NPS under 80CCD.</div></div>
     </div>
   </div>
 </div>
+
+<!-- ══════ AUTH ══════ -->
+<div class="page" id="page-auth">
+  <div class="auth-layout">
+    <div class="auth-header">
+      <div class="auth-logo-big">Fin<em>CA</em></div>
+      <p class="auth-tagline">Sign in to save reports and track your progress</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('signup',this)">Create Account</button>
+      </div>
+      <div class="auth-panel active" id="auth-login">
+        <div class="field"><label class="field-label">Email</label><input type="email" id="login-email" placeholder="you@email.com"></div>
+        <div class="field"><label class="field-label">Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="auth-error" id="login-error"></div>
+        <button class="btn-full btn-full-primary" onclick="doLogin()">Sign In →</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doGoogleLogin()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      </div>
+      <div class="auth-panel" id="auth-signup">
+        <div class="field"><label class="field-label">Full Name</label><input type="text" id="signup-name" placeholder="Ankita S"></div>
+        <div class="field"><label class="field-label">Email</label><input type="email" id="signup-email" placeholder="you@email.com"></div>
+        <div class="field"><label class="field-label">Password</label><input type="password" id="signup-pass" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <div class="auth-error" id="signup-error"></div>
+        <button class="btn-full btn-full-primary" onclick="doSignup()">Create Account →</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doGoogleLogin()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      </div>
+    </div>
+    <div class="auth-footer"><a onclick="goTo('landing')">← Skip for now, continue without account</a></div>
+  </div>
 </div>
 
-<!-- PROFILE PAGE -->
+<!-- ══════ PROFILE ══════ -->
 <div class="page" id="page-profile">
-<div class="wrap-sm">
-  <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+<div class="form-layout">
+  <div class="form-progress">
+    <div class="progress-steps">
+      <div class="ps-item active" id="ps-1"><div class="ps-circle">1</div><div class="ps-label">Profile</div></div>
+      <div class="ps-item" id="ps-2"><div class="ps-circle">2</div><div class="ps-label">Expenses</div></div>
+      <div class="ps-item" id="ps-3"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+    </div>
+  </div>
   <div class="form-header">
-    <div class="form-page-tag">Step 1 of 3</div>
-    <h2 class="form-page-title">Your profile</h2>
-    <p class="form-page-sub">Basic details to personalise your investment plan.</p>
+    <div class="form-step-tag">Step 1 of 3</div>
+    <h2 class="form-title">Your profile</h2>
+    <p class="form-sub">Basic details to personalise your investment plan. All calculations run in your browser — nothing is sent anywhere.</p>
   </div>
   <div class="field-grid">
-    <div class="field-group" style="grid-column:1/-1;">
+    <div class="field" id="fg-name" style="grid-column:1/-1">
       <label class="field-label">Full Name</label>
-      <input type="text" id="f-name" placeholder="Eg:Ankita S">
+      <input type="text" id="f-name" placeholder="e.g. Ankita S" oninput="validateName(this)">
+      <div class="field-hint">Letters and spaces only</div>
+      <div class="field-error">Please enter a valid name — letters only, no numbers</div>
     </div>
-    <div class="field-group">
-      <label class="field-label">Your Age</label>
-      <input type="number" id="f-age" placeholder="Eg:25" min="18" max="59">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Monthly Income (Rs)</label>
-      <input type="number" id="f-income" placeholder="Eg:50000">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Retirement Goal (Rs)</label>
-      <input type="number" id="f-goal" placeholder="Eg:10000000">
-      <div class="field-hint">Total corpus you want at retirement</div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Existing Savings (Rs)</label>
-      <input type="number" id="f-savings" placeholder="Eg:100000" value="0">
-      <div class="field-hint">Liquid cash or FDs you already have</div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Expected Income Growth % per Year</label>
-      <input type="number" id="f-growth" placeholder="Eg:8" value="8">
-    </div>
+    <div class="field"><label class="field-label">Your Age</label><input type="number" id="f-age" placeholder="e.g. 28" min="18" max="59"></div>
+    <div class="field"><label class="field-label">Monthly Income (₹)</label><input type="number" id="f-income" placeholder="e.g. 75000" oninput="updateSurplus()"></div>
+    <div class="field"><label class="field-label">Retirement Goal (₹)</label><input type="number" id="f-goal" placeholder="e.g. 10000000"><div class="field-hint">Total corpus target at age 60</div></div>
+    <div class="field"><label class="field-label">Existing Savings (₹)</label><input type="number" id="f-savings" placeholder="e.g. 100000" value="0"><div class="field-hint">Liquid cash, FDs you already have</div></div>
+    <div class="field" style="grid-column:1/-1"><label class="field-label">Expected Income Growth % / Year</label><input type="number" id="f-growth" placeholder="e.g. 8" value="8"><div class="field-hint">Average annual salary increment (typical: 8–12%)</div></div>
   </div>
-  <div class="field-group" style="margin-top:8px;">
+  <div class="field" style="margin-top:4px;">
     <label class="field-label">Risk Appetite</label>
-    <div class="radio-group" id="risk-group">
-      <label class="radio-option" onclick="selectRadio('risk','aggressive',this)">
-        <input type="radio" name="risk" value="aggressive">
-        <div class="radio-title">Aggressive</div>
-        <div class="radio-desc">High equity, comfortable with market swings</div>
-      </label>
-      <label class="radio-option selected" onclick="selectRadio('risk','moderate',this)">
-        <input type="radio" name="risk" value="moderate" checked>
-        <div class="radio-title">Moderate</div>
-        <div class="radio-desc">Balanced mix of growth and safety</div>
-      </label>
-      <label class="radio-option" onclick="selectRadio('risk','conservative',this)">
-        <input type="radio" name="risk" value="conservative">
-        <div class="radio-title">Conservative</div>
-        <div class="radio-desc">Capital protection, prefer FDs and debt</div>
-      </label>
+    <div class="radio-grid" id="risk-group">
+      <label class="radio-card" onclick="selectRadio('risk','aggressive',this)"><input type="radio" name="risk" value="aggressive"><div class="rc-title">Aggressive</div><div class="rc-desc">High equity, comfortable with market ups and downs</div></label>
+      <label class="radio-card selected" onclick="selectRadio('risk','moderate',this)"><input type="radio" name="risk" value="moderate" checked><div class="rc-title">Moderate</div><div class="rc-desc">Balanced mix of growth and safety</div></label>
+      <label class="radio-card" onclick="selectRadio('risk','conservative',this)"><input type="radio" name="risk" value="conservative"><div class="rc-title">Conservative</div><div class="rc-desc">Capital protection, prefer FDs and debt</div></label>
     </div>
   </div>
-  <div class="field-group" style="margin-top:16px;">
+  <div class="field" style="margin-top:16px;">
     <label class="field-label">Major Health Condition?</label>
-    <div class="radio-group" style="grid-template-columns:1fr 1fr;">
-      <label class="radio-option selected" onclick="selectRadio('health','no',this)">
-        <input type="radio" name="health" value="no" checked>
-        <div class="radio-title">No</div>
-        <div class="radio-desc">Standard allocation</div>
-      </label>
-      <label class="radio-option" onclick="selectRadio('health','yes',this)">
-        <input type="radio" name="health" value="yes">
-        <div class="radio-title">Yes</div>
-        <div class="radio-desc">Higher health insurance priority</div>
-      </label>
+    <div class="radio-grid" style="grid-template-columns:1fr 1fr;">
+      <label class="radio-card selected" onclick="selectRadio('health','no',this)"><input type="radio" name="health" value="no" checked><div class="rc-title">No</div><div class="rc-desc">Standard allocation</div></label>
+      <label class="radio-card" onclick="selectRadio('health','yes',this)"><input type="radio" name="health" value="yes"><div class="rc-title">Yes</div><div class="rc-desc">Higher health insurance priority</div></label>
     </div>
   </div>
   <div class="form-nav">
-    <button class="back-btn" onclick="goTo('landing')">Back to home</button>
-    <button class="btn-primary" onclick="goToExpenses()">Next: Expenses</button>
+    <button class="btn-back" onclick="goTo('landing')">← Back</button>
+    <button class="btn-next" onclick="goToExpenses()">Next: Expenses →</button>
   </div>
 </div>
 </div>
 
-<!-- EXPENSES PAGE -->
+<!-- ══════ EXPENSES ══════ -->
 <div class="page" id="page-expenses">
-<div class="wrap-sm">
-  <div class="progress-bar"><div class="progress-fill" style="width:55%"></div></div>
+<div class="form-layout">
+  <div class="form-progress">
+    <div class="progress-steps">
+      <div class="ps-item done" id="ps-1b"><div class="ps-circle">✓</div><div class="ps-label">Profile</div></div>
+      <div class="ps-item active" id="ps-2b"><div class="ps-circle">2</div><div class="ps-label">Expenses</div></div>
+      <div class="ps-item" id="ps-3b"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+    </div>
+  </div>
   <div class="form-header">
-    <div class="form-page-tag">Step 2 of 3</div>
-    <h2 class="form-page-title">Monthly expenses</h2>
-    <p class="form-page-sub">Your real surplus — not an assumed percentage — powers FinCA's recommendations.</p>
+    <div class="form-step-tag">Step 2 of 3</div>
+    <h2 class="form-title">Monthly expenses</h2>
+    <p class="form-sub">Your real surplus — not an assumed percentage — powers FinCA's recommendations. Be honest for the most accurate plan.</p>
   </div>
   <div class="field-grid">
-    <div class="field-group">
-      <label class="field-label">Rent or Home EMI (Rs)</label>
-      <input type="number" id="f-rent" placeholder="Eg:15000" value="0" oninput="updateSurplus()">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Other EMIs — car, education (Rs)</label>
-      <input type="number" id="f-emi" placeholder="Eg:0" value="0" oninput="updateSurplus()">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Groceries and Food (Rs)</label>
-      <input type="number" id="f-groceries" placeholder="Eg:8000" value="0" oninput="updateSurplus()">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Bills, Transport, Phone (Rs)</label>
-      <input type="number" id="f-utilities" placeholder="Eg:3000" value="0" oninput="updateSurplus()">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Number of Dependents</label>
-      <input type="number" id="f-deps" placeholder="Eg:0" value="0" min="0" oninput="updateSurplus()">
-      <div class="field-hint">Children, parents, or adults you support</div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Lifestyle</label>
+    <div class="field"><label class="field-label">Rent or Home EMI (₹)</label><input type="number" id="f-rent" placeholder="e.g. 15000" value="0" oninput="updateSurplus()"></div>
+    <div class="field"><label class="field-label">Other EMIs — car, education (₹)</label><input type="number" id="f-emi" placeholder="0" value="0" oninput="updateSurplus()"><div class="field-hint">Enter 0 if none</div></div>
+    <div class="field"><label class="field-label">Groceries & Food (₹)</label><input type="number" id="f-groceries" placeholder="e.g. 8000" value="0" oninput="updateSurplus()"></div>
+    <div class="field"><label class="field-label">Bills, Transport, Phone (₹)</label><input type="number" id="f-utilities" placeholder="e.g. 3000" value="0" oninput="updateSurplus()"></div>
+    <div class="field"><label class="field-label">Number of Dependents</label><input type="number" id="f-deps" placeholder="0" value="0" min="0" oninput="updateSurplus()"><div class="field-hint">Children, parents you support (₹6,000/person assumed)</div></div>
+    <div class="field"><label class="field-label">Lifestyle</label>
       <select id="f-lifestyle" onchange="updateSurplus()">
-        <option value="frugal">Frugal — spend lean, save more</option>
-        <option value="average" selected>Average — comfortable living</option>
-        <option value="lavish">Lavish — premium lifestyle</option>
+        <option value="frugal">Frugal — spend lean (5% of income)</option>
+        <option value="average" selected>Average — comfortable (10% of income)</option>
+        <option value="lavish">Lavish — premium (20% of income)</option>
       </select>
     </div>
   </div>
-  <div id="surplus-preview" style="display:none;margin-top:8px;"></div>
+  <div class="surplus-box" id="surplus-preview">
+    <div class="surplus-row"><span class="sr-label">Monthly Income</span><span class="sr-val" id="sp-income" style="color:var(--green)">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Total Expenses</span><span class="sr-val" id="sp-expenses" style="color:var(--red)">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Monthly Surplus</span><span class="sr-val" id="sp-surplus">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Liquid Buffer (20%)</span><span class="sr-val" id="sp-buffer" style="color:var(--gold)">—</span></div>
+    <div class="surplus-row"><span class="sr-label" style="font-weight:700;color:var(--text)">Monthly SIP Amount</span><span class="sr-val" id="sp-sip" style="color:var(--green);font-size:1rem">—</span></div>
+  </div>
   <div class="form-nav">
-    <button class="back-btn" onclick="goTo('profile')">Back</button>
-    <button class="btn-primary" onclick="goTo('loans')">Next: Loans</button>
+    <button class="btn-back" onclick="goTo('profile')">← Back</button>
+    <button class="btn-next" onclick="goTo('loans')">Next: Loans →</button>
   </div>
 </div>
 </div>
 
-<!-- LOANS PAGE -->
+<!-- ══════ LOANS ══════ -->
 <div class="page" id="page-loans">
-<div class="wrap-sm">
-  <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+<div class="form-layout">
+  <div class="form-progress">
+    <div class="progress-steps">
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Profile</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Expenses</div></div>
+      <div class="ps-item active"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+    </div>
+  </div>
   <div class="form-header">
-    <div class="form-page-tag">Step 3 of 3</div>
-    <h2 class="form-page-title">Outstanding loans</h2>
-    <p class="form-page-sub">Loans above 12% interest cost more than most investments return. FinCA prioritises clearing these before investing your surplus.</p>
+    <div class="form-step-tag">Step 3 of 3</div>
+    <h2 class="form-title">Outstanding loans</h2>
+    <p class="form-sub">Loans above 12% interest cost more than most investments return. FinCA prioritises clearing these before investing your surplus.</p>
   </div>
   <div id="loans-container"></div>
-  <button class="add-btn" onclick="addLoan()">+ Add a loan</button>
-  <div style="margin-top:20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
-    <div style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">No loans?</div>
-    <div style="font-size:0.8rem;color:var(--text-mid);">Leave this section empty and click Generate Report.</div>
+  <button class="btn-add-loan" onclick="addLoan()">+ Add a loan</button>
+  <div class="no-loans-box">
+    <div class="nlb-title">No loans?</div>
+    <div class="nlb-body">Leave this section empty and click Generate Report to proceed.</div>
   </div>
   <div class="form-nav">
-    <button class="back-btn" onclick="goTo('expenses')">Back</button>
-    <button class="btn-primary" onclick="calculate()">Generate My Report</button>
+    <button class="btn-back" onclick="goTo('expenses')">← Back</button>
+    <button class="btn-next btn-generate" onclick="calculate()">Generate My Report →</button>
   </div>
 </div>
 </div>
 
-<!-- RESULTS PAGE -->
+<!-- ══════ RESULTS ══════ -->
 <div class="page" id="page-results">
-<div class="wrap">
-  <div class="results-header">
-    <div class="section-label" style="margin-bottom:12px;">Investment Report</div>
-    <div class="results-name" id="r-name">FinCA Report</div>
-    <div class="results-meta" id="r-meta"></div>
+<div class="results-layout">
+  <div class="result-header">
+    <div>
+      <div class="rh-name" id="r-name">FinCA Report</div>
+      <div class="rh-meta" id="r-meta"></div>
+    </div>
+    <div class="health-score-block" id="r-health-score"></div>
   </div>
   <div id="r-alerts"></div>
   <div class="kpi-grid" id="r-kpis"></div>
   <div class="tab-nav">
-    <button class="tab-btn active" onclick="showTab('corpus',this)">Corpus Projection</button>
-    <button class="tab-btn" onclick="showTab('allocation',this)">Portfolio Allocation</button>
-    <button class="tab-btn" onclick="showTab('breakdown',this)">Income Breakdown</button>
-    <button class="tab-btn" onclick="showTab('taxed',this)">Tax Saving</button>
-    <button class="tab-btn" onclick="showTab('where',this)">Where to Invest</button>
+    <button class="tab-btn active" onclick="showTab('corpus',this)">📊 Corpus</button>
+    <button class="tab-btn" onclick="showTab('allocation',this)">🥧 Allocation</button>
+    <button class="tab-btn" onclick="showTab('breakdown',this)">💸 Breakdown</button>
+    <button class="tab-btn" onclick="showTab('tax',this)">🧾 Tax Saving</button>
+    <button class="tab-btn" onclick="showTab('where',this)">📍 Where to Invest</button>
+    <button class="tab-btn" onclick="showTab('plan',this)">✅ Action Plan</button>
   </div>
   <div class="tab-panel active" id="tab-corpus">
-    <div class="card"><div class="section-label">Retirement corpus — 800 market simulations</div><div id="r-bars"></div></div>
+    <div class="r-card"><div class="r-card-title">Retirement corpus — 800 Monte Carlo simulations</div><div id="r-bars"></div><div class="chart-2col"><div class="chart-box"><div class="chart-box-title">Year-by-year corpus growth</div><div class="chart-wrap" style="height:190px"><canvas id="chart-growth"></canvas></div></div><div class="chart-box"><div class="chart-box-title">Simulation spread</div><div class="chart-wrap" style="height:190px"><canvas id="chart-dist"></canvas></div></div></div><div class="milestone-row" id="r-milestones"></div></div>
   </div>
   <div class="tab-panel" id="tab-allocation">
-    <div class="card"><div class="section-label">Recommended portfolio allocation</div><div class="alloc-list" id="r-alloc"></div></div>
+    <div class="r-card"><div class="r-card-title">Portfolio allocation</div><div class="pie-table-layout"><div class="chart-wrap" style="height:200px"><canvas id="chart-alloc"></canvas></div><div class="alloc-table" id="r-alloc"></div></div></div>
   </div>
   <div class="tab-panel" id="tab-breakdown">
-    <div class="card"><div class="section-label">Monthly income breakdown</div><div id="r-breakdown"></div></div>
+    <div class="r-card"><div class="r-card-title">Monthly income breakdown</div><div class="pie-table-layout"><div class="chart-wrap" style="height:200px"><canvas id="chart-exp"></canvas></div><div id="r-breakdown"></div></div></div>
   </div>
-  <div class="tab-panel" id="tab-taxed">
-    <div class="card"><div class="section-label">Section 80C tax optimisation</div><div id="r-tax"></div></div>
+  <div class="tab-panel" id="tab-tax">
+    <div class="r-card"><div class="r-card-title">Section 80C tax optimisation</div><div class="tax-grid" id="r-tax-kpis"></div><div class="tax-body-text" id="r-tax-body"></div></div>
   </div>
-  <div class="tab-panel" id="tab-where">
-    <div id="r-where"></div>
-  </div>
-  <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
-    <button class="btn-primary" onclick="goTo('landing');resetAll();">Start Over</button>
-    <button class="btn-secondary" onclick="goTo('profile')">Edit Profile</button>
+  <div class="tab-panel" id="tab-where"><div id="r-where"></div></div>
+  <div class="tab-panel" id="tab-plan"><div class="r-card"><div class="r-card-title">Your personalised action plan</div><div class="action-list" id="r-action"></div></div></div>
+  <div class="result-actions">
+    <button class="btn-next" onclick="goTo('landing');resetAll()">Start Over</button>
+    <button class="btn-outline" onclick="goTo('profile')">Edit Inputs</button>
   </div>
 </div>
 </div>
-
-<footer>FinCA — Built with real Indian market data &nbsp;.&nbsp; NSE &nbsp;.&nbsp; MCX &nbsp;.&nbsp; RBI &nbsp;.&nbsp; AMFI</footer>
 
 <script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────
 const AVG_NIFTY=0.2065,AVG_GOLD=0.108,AVG_FD=0.070,AVG_DEBT=0.075,AVG_INF=0.050;
-const COLORS={equity:'#00c4a0',gold:'#e8a000',fd:'#4a90e2',debt_mf:'#a78bfa',health_insurance:'#f472b6'};
+const PALETTE={equity:'#2563eb',gold:'#d97706',fd:'#16a34a',debt_mf:'#7c3aed',health_insurance:'#db2777'};
+const PALETTE_ARR=['#2563eb','#d97706','#16a34a','#7c3aed','#db2777'];
 let selRisk='moderate',selHealth='no',loanCount=0;
+let cGrowth=null,cDist=null,cAlloc=null,cExp=null;
 
+// ── THEME ─────────────────────────────────────────────────────────────
+function setTheme(t,btn){
+  document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  localStorage.setItem('finca-theme',t);
+  if(cGrowth||cAlloc)setTimeout(()=>rebuildCharts(),100);
+}
+(function(){
+  const saved=localStorage.getItem('finca-theme')||'light';
+  document.documentElement.setAttribute('data-theme',saved);
+  setTimeout(()=>{const b=document.getElementById('tb-'+saved);if(b){document.querySelectorAll('.theme-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');}},50);
+})();
+
+// ── FORMAT ─────────────────────────────────────────────────────────────
+function fmtIN(n){if(!n&&n!==0)return'—';const a=Math.abs(Math.round(n));const s=a.toString();let r='';if(s.length<=3){r=s;}else{r=s.slice(-3);let rem=s.slice(0,-3);while(rem.length>2){r=rem.slice(-2)+','+r;rem=rem.slice(0,-2);}if(rem.length)r=rem+','+r;}return(n<0?'-':'')+r;}
+function fmt(n){if(n===undefined||n===null||isNaN(n))return'—';const a=Math.abs(n);if(a>=10000000)return'₹'+(n/10000000).toFixed(2)+' Cr';if(a>=100000)return'₹'+(n/100000).toFixed(2)+' L';return'₹'+fmtIN(n);}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── VALIDATION ─────────────────────────────────────────────────────────
+function validateName(input){const ok=/^[a-zA-Z\s]*$/.test(input.value);document.getElementById('fg-name').classList.toggle('has-error',!ok&&input.value.length>0);return ok||input.value.length===0;}
+
+// ── NAV ──────────────────────────────────────────────────────────────
 function goTo(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -428,127 +804,154 @@ function goTo(page){
   const order=['profile','expenses','loans','results'];
   const map={profile:'step-1',expenses:'step-2',loans:'step-3',results:'step-4'};
   const idx=order.indexOf(page);
-  document.querySelectorAll('.nav-step').forEach(s=>{s.classList.remove('active','done');s.onclick=null;});
+  document.querySelectorAll('.nav-step').forEach(s=>{s.classList.remove('active','done');s.onclick=null;s.style.cursor='default';});
   order.forEach((p,i)=>{
     const el=document.getElementById(map[p]);if(!el)return;
-    if(i<idx){el.classList.add('done');el.onclick=()=>goTo(p);}
+    if(i<idx){el.classList.add('done');el.onclick=()=>goTo(p);el.style.cursor='pointer';}
     else if(i===idx)el.classList.add('active');
   });
 }
 
-function selectRadio(group,value,el){
-  el.parentElement.querySelectorAll('.radio-option').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected');
-  if(group==='risk')selRisk=value;
-  if(group==='health')selHealth=value;
-}
+function selectRadio(g,v,el){el.parentElement.querySelectorAll('.radio-card').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');if(g==='risk')selRisk=v;if(g==='health')selHealth=v;}
 
 function goToExpenses(){
-  if(!document.getElementById('f-name').value){alert('Please enter your name.');return;}
-  if(!document.getElementById('f-age').value){alert('Please enter your age.');return;}
-  if(!document.getElementById('f-income').value){alert('Please enter your monthly income.');return;}
-  goTo('expenses');
+  const name=document.getElementById('f-name').value.trim();
+  const age=document.getElementById('f-age').value;
+  const income=document.getElementById('f-income').value;
+  if(!name){showToast('Please enter your name');return;}
+  if(!/^[a-zA-Z\s]+$/.test(name)){showToast('Name should contain letters only');document.getElementById('fg-name').classList.add('has-error');return;}
+  if(!age||+age<18||+age>59){showToast('Please enter a valid age between 18 and 59');return;}
+  if(!income||+income<1){showToast('Please enter your monthly income');return;}
+  goTo('expenses');updateSurplus();
 }
 
+// ── SURPLUS ───────────────────────────────────────────────────────────
 function updateSurplus(){
-  const income=parseFloat(document.getElementById('f-income').value)||0;
-  const rent=parseFloat(document.getElementById('f-rent').value)||0;
-  const emi=parseFloat(document.getElementById('f-emi').value)||0;
-  const grocer=parseFloat(document.getElementById('f-groceries').value)||0;
-  const utils=parseFloat(document.getElementById('f-utilities').value)||0;
-  const deps=parseInt(document.getElementById('f-deps').value)||0;
+  const income=+document.getElementById('f-income').value||0;
+  const rent=+document.getElementById('f-rent').value||0;
+  const emi=+document.getElementById('f-emi').value||0;
+  const grocer=+document.getElementById('f-groceries').value||0;
+  const utils=+document.getElementById('f-utilities').value||0;
+  const deps=+document.getElementById('f-deps').value||0;
   const ls=document.getElementById('f-lifestyle').value;
-  const lsSpend={frugal:income*0.05,average:income*0.10,lavish:income*0.20}[ls]||0;
+  const lsSpend={frugal:income*.05,average:income*.10,lavish:income*.20}[ls]||0;
   const depCost=deps*6000;
   const total=rent+emi+grocer+utils+lsSpend+depCost;
   const surplus=income-total;
-  const investable=Math.max(Math.round(surplus*0.80),500);
+  const investable=Math.max(Math.round(surplus*.80),500);
   const preview=document.getElementById('surplus-preview');
-  preview.style.display='block';
-  if(surplus<500){
-    preview.innerHTML=`<div class="alert warn"><strong>Low Surplus Warning</strong>Monthly surplus is Rs ${Math.round(surplus).toLocaleString('en-IN')}. Expenses are too high relative to income.</div>`;
-  } else {
-    preview.innerHTML=`<div class="alert success"><strong>Live Surplus Preview</strong>Surplus: Rs ${Math.round(surplus).toLocaleString('en-IN')} — FinCA will invest Rs ${investable.toLocaleString('en-IN')}/month and keep Rs ${Math.round(surplus*0.20).toLocaleString('en-IN')} as a liquid buffer.</div>`;
+  if(income>0){
+    preview.style.display='block';
+    document.getElementById('sp-income').textContent=fmt(income);
+    document.getElementById('sp-expenses').textContent=fmt(total);
+    const sEl=document.getElementById('sp-surplus');sEl.textContent=fmt(surplus);sEl.style.color=surplus<500?'var(--red)':'var(--text)';
+    document.getElementById('sp-buffer').textContent=fmt(Math.round(surplus*.20));
+    document.getElementById('sp-sip').textContent=fmt(investable)+'/month';
   }
 }
 
+// ── LOANS ─────────────────────────────────────────────────────────────
 function addLoan(){
   loanCount++;const id=loanCount;
   const c=document.getElementById('loans-container');
-  const div=document.createElement('div');
-  div.className='loan-row';div.id='loan-'+id;
-  div.innerHTML=`
-    <div class="field-group" style="margin:0;"><label class="field-label">Type</label><select style="width:100%;"><option>Personal</option><option>Credit Card</option><option>Vehicle</option><option>Other</option></select></div>
-    <div class="field-group" style="margin:0;"><label class="field-label">Interest Rate %</label><input type="number" placeholder="Eg:18" style="width:100%;"></div>
-    <div class="field-group" style="margin:0;"><label class="field-label">Monthly EMI (Rs)</label><input type="number" placeholder="Eg:5000" style="width:100%;"></div>
-    <button class="loan-remove" onclick="document.getElementById('loan-${id}').remove();">x</button>
-  `;
-  c.appendChild(div);
+  const d=document.createElement('div');d.className='loan-card';d.id='loan-'+id;
+  d.innerHTML=`<div class="field" style="margin:0"><label class="field-label">Type</label><select style="width:100%"><option>Personal</option><option>Credit Card</option><option>Vehicle</option><option>Education</option><option>Other</option></select></div><div class="field" style="margin:0"><label class="field-label">Rate %</label><input type="number" placeholder="e.g. 18" style="width:100%"></div><div class="field" style="margin:0"><label class="field-label">Monthly EMI (₹)</label><input type="number" placeholder="e.g. 5000" style="width:100%"></div><button class="btn-remove" onclick="document.getElementById('loan-${id}').remove()">✕</button>`;
+  c.appendChild(d);
 }
+function getLoans(){const rows=document.querySelectorAll('.loan-card');const loans=[],highCost=[];rows.forEach(row=>{const inp=row.querySelectorAll('input[type=number]');const rate=+inp[0]?.value||0,emi=+inp[1]?.value||0,type=row.querySelector('select')?.value||'Other';if(emi>0){loans.push({type,rate,emi});if(rate>12)highCost.push({type,rate,emi});}});return{loans,highCost};}
 
-function getLoans(){
-  const rows=document.querySelectorAll('.loan-row');
-  const loans=[],highCost=[];
-  rows.forEach(row=>{
-    const inputs=row.querySelectorAll('input[type=number]');
-    const rate=parseFloat(inputs[0]?.value)||0;
-    const emi=parseFloat(inputs[1]?.value)||0;
-    const type=row.querySelector('select')?.value||'Other';
-    if(emi>0){loans.push({type,rate,emi});if(rate>12)highCost.push({type,rate,emi});}
-  });
-  return{loans,highCost};
-}
-
-function getAlloc(age,risk,hasHealth,deps,hasEMI){
-  const ytr=Math.max(60-age,1);
-  let b;
-  if(hasHealth)b={equity:20,gold:10,fd:25,debt_mf:20,health_insurance:25};
-  else if(risk==='aggressive')b={equity:60,gold:10,fd:10,debt_mf:15,health_insurance:5};
-  else if(risk==='moderate')b={equity:40,gold:15,fd:20,debt_mf:20,health_insurance:5};
-  else b={equity:20,gold:20,fd:35,debt_mf:20,health_insurance:5};
-  if(deps>=2){b.health_insurance=Math.min(b.health_insurance+5,25);b.equity=Math.max(b.equity-5,10);}
-  if(hasEMI){b.equity=Math.max(b.equity-5,10);b.fd+=5;}
-  if(ytr<10){const cut=Math.min(b.equity,20);b.equity-=cut;b.fd+=cut;}
-  return b;
-}
-
+// ── CORE CALC ─────────────────────────────────────────────────────────
+function getAlloc(age,risk,hasHealth,deps,hasEMI){const ytr=Math.max(60-age,1);let b;if(hasHealth)b={equity:20,gold:10,fd:25,debt_mf:20,health_insurance:25};else if(risk==='aggressive')b={equity:60,gold:10,fd:10,debt_mf:15,health_insurance:5};else if(risk==='moderate')b={equity:40,gold:15,fd:20,debt_mf:20,health_insurance:5};else b={equity:20,gold:20,fd:35,debt_mf:20,health_insurance:5};if(deps>=2){b.health_insurance=Math.min(b.health_insurance+5,25);b.equity=Math.max(b.equity-5,10);}if(hasEMI){b.equity=Math.max(b.equity-5,10);b.fd+=5;}if(ytr<10){const cut=Math.min(b.equity,20);b.equity-=cut;b.fd+=cut;}return b;}
 function getWR(a){const t=Object.values(a).reduce((x,y)=>x+y,0);return(a.equity/t)*AVG_NIFTY+(a.gold/t)*AVG_GOLD+(a.fd/t)*AVG_FD+(a.debt_mf/t)*AVG_DEBT;}
+function mcSim(sip,years,wr,n=800){const res=[];for(let i=0;i<n;i++){let c=0;for(let m=0;m<years*12;m++){const mr=(wr+(Math.random()-.5)*.08)/12;c=(c+sip)*(1+mr);}res.push(c);}res.sort((a,b)=>a-b);return{worst:res[Math.floor(n*.10)],likely:res[Math.floor(n*.50)],best:res[Math.floor(n*.90)],all:res};}
+function growC(sip,years,wr,g){const rm=wr/12,gm=g/12/100;let c=0,cur=sip;for(let m=0;m<years*12;m++){c=(c+cur)*(1+rm);cur*=(1+gm);}return c;}
+function corpusAt(sip,year,wr){const r=wr/12,n=year*12;return r===0?sip*n:sip*(((1+r)**n-1)/r)*(1+r);}
 
-function mcSim(sip,years,wr,n=800){
-  const res=[];
-  for(let i=0;i<n;i++){let c=0;for(let m=0;m<years*12;m++){const mr=(wr+(Math.random()-0.5)*0.08)/12;c=(c+sip)*(1+mr);}res.push(c);}
-  res.sort((a,b)=>a-b);
-  return{worst:res[Math.floor(n*0.10)],likely:res[Math.floor(n*0.50)],best:res[Math.floor(n*0.90)]};
+// ── HEALTH SCORE ──────────────────────────────────────────────────────
+function calcScore(surplus,income,savings,efReq,gap,alloc,age,highCost){
+  let s=0;
+  s+=Math.min((surplus/income)*100,25);
+  s+=savings>=efReq?20:savings>=efReq*.5?10:savings>0?5:0;
+  s+=gap<=0?20:gap<income*12?10:0;
+  s+=alloc.health_insurance>=10?15:alloc.health_insurance>=5?8:0;
+  const idealEq=Math.max(100-age,20);s+=Math.max(10-Math.abs(alloc.equity-idealEq)/3,0);
+  s+=highCost.length===0?10:!highCost.some(l=>l.rate>20)?5:0;
+  return Math.min(Math.round(s),100);
+}
+function scoreGrade(s){if(s>=80)return{g:'Excellent',c:'#16a34a'};if(s>=65)return{g:'Good',c:'#2563eb'};if(s>=45)return{g:'Fair',c:'#d97706'};return{g:'Needs Attention',c:'#dc2626'};}
+function renderScore(score,el){
+  const{g,c}=scoreGrade(score);const r=34,circ=2*Math.PI*r;const offset=circ-(score/100)*circ;
+  el.innerHTML=`<div class="health-ring"><svg width="80" height="80" viewBox="0 0 80 80"><circle class="hr-bg" cx="40" cy="40" r="${r}"/><circle class="hr-fg" cx="40" cy="40" r="${r}" stroke="${c}" stroke-dasharray="${circ}" stroke-dashoffset="${circ}" id="hs-arc"/></svg><div class="hr-num" style="color:${c}">${score}<div class="hr-label-sm">/100</div></div></div><div class="hs-info"><div class="hs-title">Financial Health</div><div class="hs-grade" style="color:${c}">${g}</div><div class="hs-sub">Based on surplus, savings, insurance & goals</div></div>`;
+  setTimeout(()=>{const a=document.getElementById('hs-arc');if(a)a.style.strokeDashoffset=offset;},200);
 }
 
-function growC(sip,years,wr,g){const rm=wr/12,gm=g/12/100;let c=0,cur=sip;for(let m=0;m<years*12;m++){c=(c+cur)*(1+rm);cur*=(1+gm);}return c;}
+// ── CHARTS ────────────────────────────────────────────────────────────
+let _chartData={};
+function destroyCharts(){[cGrowth,cDist,cAlloc,cExp].forEach(c=>{try{if(c)c.destroy();}catch(e){}});cGrowth=cDist=cAlloc=cExp=null;}
+const chartOpts={plugins:{legend:{display:false}},animation:{duration:900,easing:'easeOutQuart'},responsive:true,maintainAspectRatio:false};
+function getCSSVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function gridColor(){return getCSSVar('--border')||'#e4e8f0';}
+function tickColor(){return getCSSVar('--text-dim')||'#9aa3bc';}
 
-function fmt(n){const a=Math.abs(n);if(a>=10000000)return'Rs '+(n/10000000).toFixed(2)+' Cr';if(a>=100000)return'Rs '+(n/100000).toFixed(2)+' L';return'Rs '+Math.round(n).toLocaleString('en-IN');}
+function buildGrowthChart(sip,years,wr,growth,age){
+  const labels=[],data=[],dataG=[];
+  const step=Math.max(1,Math.floor(years/8));
+  for(let y=0;y<=years;y+=step){labels.push('Age '+(age+y));data.push(Math.round(corpusAt(sip,y,wr)));const rm=wr/12,gm=growth/12/100;let c=0,cur=sip;for(let m=0;m<y*12;m++){c=(c+cur)*(1+rm);cur*=(1+gm);}dataG.push(Math.round(c));}
+  _chartData.growth={labels,data,dataG};
+  const ctx=document.getElementById('chart-growth').getContext('2d');
+  cGrowth=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Base SIP',data,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.06)',borderWidth:2,pointRadius:3,fill:true,tension:.4},{label:'With Growth',data:dataG,borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,.04)',borderWidth:2,pointRadius:3,fill:true,tension:.4,borderDash:[5,4]}]},options:{...chartOpts,scales:{x:{ticks:{color:tickColor(),font:{size:9}},grid:{color:gridColor()}},y:{ticks:{color:tickColor(),font:{size:9},callback:v=>fmt(v)},grid:{color:gridColor()}}}}});
+}
 
+function buildDistChart(all){
+  const n=10,min=all[0],max=all[all.length-1],step=(max-min)/n;
+  const counts=Array(n).fill(0);all.forEach(v=>{const i=Math.min(Math.floor((v-min)/step),n-1);counts[i]++;});
+  const labels=counts.map((_,i)=>fmt(min+i*step));
+  _chartData.dist={labels,counts};
+  const ctx=document.getElementById('chart-dist').getContext('2d');
+  cDist=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:counts,backgroundColor:'rgba(37,99,235,.35)',borderColor:'#2563eb',borderWidth:1,borderRadius:4}]},options:{...chartOpts,scales:{x:{ticks:{display:false},grid:{display:false}},y:{ticks:{color:tickColor(),font:{size:9}},grid:{color:gridColor()}}}}});
+}
+
+function buildAllocChart(alloc){
+  _chartData.alloc=alloc;
+  const ctx=document.getElementById('chart-alloc').getContext('2d');
+  cAlloc=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(alloc).map(k=>k.replace('_',' ')),datasets:[{data:Object.values(alloc),backgroundColor:PALETTE_ARR,borderColor:getCSSVar('--surface')||'#fff',borderWidth:3,hoverOffset:6}]},options:{...chartOpts,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed}%`}}}}});
+}
+
+function buildExpChart(items){
+  _chartData.exp=items;
+  const ctx=document.getElementById('chart-exp').getContext('2d');
+  const colors=['#dc2626','#2563eb','#7c3aed','#db2777','#d97706','#16a34a','#6b7280'];
+  cExp=new Chart(ctx,{type:'doughnut',data:{labels:items.map(i=>i[0]),datasets:[{data:items.map(i=>i[1]),backgroundColor:colors,borderColor:getCSSVar('--surface')||'#fff',borderWidth:3,hoverOffset:6}]},options:{...chartOpts,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.parsed)}`}}}}});
+}
+
+function rebuildCharts(){
+  // called after theme change — skip if no data
+}
+
+// ── MAIN CALCULATE ────────────────────────────────────────────────────
 function calculate(){
-  const name=document.getElementById('f-name').value||'You';
-  const age=parseInt(document.getElementById('f-age').value)||25;
-  const income=parseFloat(document.getElementById('f-income').value)||50000;
-  const goal=parseFloat(document.getElementById('f-goal').value)||10000000;
-  const savings=parseFloat(document.getElementById('f-savings').value)||0;
-  const growth=parseFloat(document.getElementById('f-growth').value)||8;
-  const rent=parseFloat(document.getElementById('f-rent').value)||0;
-  const emi=parseFloat(document.getElementById('f-emi').value)||0;
-  const grocer=parseFloat(document.getElementById('f-groceries').value)||0;
-  const utils=parseFloat(document.getElementById('f-utilities').value)||0;
-  const deps=parseInt(document.getElementById('f-deps').value)||0;
+  const name=document.getElementById('f-name').value.trim()||'You';
+  const age=+document.getElementById('f-age').value||25;
+  const income=+document.getElementById('f-income').value||50000;
+  const goal=+document.getElementById('f-goal').value||10000000;
+  const savings=+document.getElementById('f-savings').value||0;
+  const growth=+document.getElementById('f-growth').value||8;
+  const rent=+document.getElementById('f-rent').value||0;
+  const emi=+document.getElementById('f-emi').value||0;
+  const grocer=+document.getElementById('f-groceries').value||0;
+  const utils=+document.getElementById('f-utilities').value||0;
+  const deps=+document.getElementById('f-deps').value||0;
   const ls=document.getElementById('f-lifestyle').value;
-  const lsSpend={frugal:income*0.05,average:income*0.10,lavish:income*0.20}[ls];
+  const lsSpend={frugal:income*.05,average:income*.10,lavish:income*.20}[ls];
   const depCost=deps*6000;
   const totalExp=rent+emi+grocer+utils+lsSpend+depCost;
   const surplus=income-totalExp;
   const{loans,highCost}=getLoans();
   const highEMI=highCost.reduce((a,l)=>a+l.emi,0);
   const hasEMI=emi>0||loans.some(l=>l.emi>0);
-  const investable=Math.max(Math.round((surplus-highEMI)*0.80),500);
+  const investable=Math.max(Math.round((surplus-highEMI)*.80),500);
   const ytr=Math.max(60-age,1);
   const efReq=totalExp*6;
-  const efOk=savings>=efReq;
   const alloc=getAlloc(age,selRisk,selHealth==='yes',deps,hasEMI);
   const wr=getWR(alloc);
   const sim=mcSim(investable,ytr,wr);
@@ -556,305 +959,230 @@ function calculate(){
   const infAdj=sim.likely/Math.pow(1+AVG_INF,ytr);
   const gap=goal-sim.likely;
   const annInc=income*12;
-  const bracket=annInc>1500000?0.30:annInc>700000?0.20:0.05;
-  const elssAmt=Math.min((alloc.equity/100)*income*12,150000);
+  const bracket=annInc>1500000?.30:annInc>700000?.20:.05;
+  const elssAmt=Math.min((alloc.equity/100)*annInc,150000);
   const taxSaved=Math.round(elssAmt*bracket);
+  const hscore=calcScore(surplus,income,savings,efReq,gap,alloc,age,highCost);
 
+  destroyCharts();
   goTo('results');
 
-  document.getElementById('r-name').textContent=name+"'s Investment Report";
-  document.getElementById('r-meta').textContent=`Age ${age}  .  ${ytr} years to retirement  .  ${selRisk.charAt(0).toUpperCase()+selRisk.slice(1)} risk  .  ${new Date().toLocaleDateString('en-IN')}`;
+  // Save to Firebase
+  saveReport({name,age,income,goal,savings,growth,rent,emi,groceries:grocer,utilities:utils,deps,lifestyle:ls,risk:selRisk,health:selHealth,corpusLikely:Math.round(sim.likely),corpusWorst:Math.round(sim.worst),corpusBest:Math.round(sim.best),investable,surplus:Math.round(surplus),ytr,healthScore:hscore,allocation:alloc});
 
+  // Header
+  document.getElementById('r-name').textContent=name+"'s Investment Report";
+  const riskLabel={aggressive:'Aggressive',moderate:'Moderate',conservative:'Conservative'}[selRisk];
+  document.getElementById('r-meta').innerHTML=`
+    <span class="rh-tag">Age ${age}</span>
+    <span class="rh-tag">${ytr} yrs to retirement</span>
+    <span class="rh-tag primary">${riskLabel} Risk</span>
+    <span class="rh-tag">${deps} dependent${deps!==1?'s':''}</span>
+    <span class="rh-tag ${gap<=0?'green':''}">${gap<=0?'✓ On Track':'⚠ Below Goal'}</span>
+    <span class="rh-tag">${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span>
+  `;
+  renderScore(hscore,document.getElementById('r-health-score'));
+
+  // Alerts
   let ah='';
-  if(!efOk)ah+=`<div class="alert warn"><strong>Emergency Fund Alert</strong>You need ${fmt(efReq)} as a 6-month emergency reserve. Shortfall: ${fmt(efReq-savings)}. Build this before increasing your SIP.</div>`;
-  highCost.forEach(l=>{ah+=`<div class="alert warn"><strong>High-Interest Loan — ${l.rate}%</strong>Your ${l.type} loan costs more than most investments return. EMI of ${fmt(l.emi)}/month excluded from investable amount.</div>`;});
-  if(surplus<500)ah+=`<div class="alert warn"><strong>Low Surplus</strong>Expenses are too close to your income. FinCA is using a minimum SIP of Rs 500.</div>`;
-  if(gap<=0)ah+=`<div class="alert success"><strong>On Track</strong>You are projected to meet your retirement goal. With ${growth}% income growth, you will comfortably exceed it.</div>`;
+  if(!savings||savings<efReq)ah+=`<div class="alert warn"><span class="alert-icon">⚠</span><div class="alert-body"><strong>Emergency Fund Alert</strong>You need ${fmt(efReq)} as a 6-month reserve. Shortfall: ${fmt(Math.max(efReq-savings,0))}. Build this before increasing SIP.</div></div>`;
+  highCost.forEach(l=>{ah+=`<div class="alert warn"><span class="alert-icon">⚠</span><div class="alert-body"><strong>High-Interest Loan — ${l.rate}%</strong>Your ${l.type} loan costs more than most investments return. EMI of ${fmt(l.emi)}/month excluded from investable amount.</div></div>`;});
+  if(gap<=0)ah+=`<div class="alert success"><span class="alert-icon">✓</span><div class="alert-body"><strong>On Track</strong>You are projected to meet your retirement goal of ${fmt(goal)}. With ${growth}% income growth, you will exceed it comfortably.</div></div>`;
   document.getElementById('r-alerts').innerHTML=ah;
 
+  // KPIs
   document.getElementById('r-kpis').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Monthly SIP</div><div class="kpi-val gold">${fmt(investable)}</div><div class="kpi-sub">After expenses and 20% buffer</div></div>
-    <div class="kpi ${gap<=0?'accent':''}"><div class="kpi-label">Likely Corpus</div><div class="kpi-val ${gap<=0?'teal':''}">${fmt(sim.likely)}</div><div class="kpi-sub">50th percentile of 800 simulations</div></div>
-    <div class="kpi"><div class="kpi-label">Your Goal</div><div class="kpi-val gold">${fmt(goal)}</div><div class="kpi-sub">${gap<=0?'You will exceed this':'Shortfall: '+fmt(gap)}</div></div>
-    <div class="kpi"><div class="kpi-label">With Income Growth</div><div class="kpi-val teal">${fmt(grow)}</div><div class="kpi-sub">At ${growth}% annual salary growth</div></div>
-    <div class="kpi"><div class="kpi-label">Inflation Adjusted</div><div class="kpi-val">${fmt(infAdj)}</div><div class="kpi-sub">In today's purchasing power</div></div>
-    <div class="kpi"><div class="kpi-label">Portfolio Return</div><div class="kpi-val gold">${(wr*100).toFixed(1)}%</div><div class="kpi-sub">Weighted annual return estimate</div></div>
+    <div class="kpi-card accent-primary"><div class="kpi-label">Monthly SIP</div><div class="kpi-val primary">${fmt(investable)}</div><div class="kpi-sub">After expenses and 20% buffer</div></div>
+    <div class="kpi-card ${gap<=0?'accent-green':''}"><div class="kpi-label">Likely Corpus</div><div class="kpi-val ${gap<=0?'green':''}">${fmt(sim.likely)}</div><div class="kpi-sub">50th percentile · 800 simulations</div></div>
+    <div class="kpi-card accent-gold"><div class="kpi-label">Your Goal</div><div class="kpi-val gold">${fmt(goal)}</div><div class="kpi-sub">${gap<=0?'✓ Will be met':'Shortfall: '+fmt(gap)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">With Income Growth</div><div class="kpi-val green">${fmt(grow)}</div><div class="kpi-sub">At ${growth}% annual salary growth</div></div>
+    <div class="kpi-card"><div class="kpi-label">Inflation Adjusted</div><div class="kpi-val">${fmt(infAdj)}</div><div class="kpi-sub">In today's purchasing power</div></div>
+    <div class="kpi-card"><div class="kpi-label">Portfolio Return</div><div class="kpi-val primary">${(wr*100).toFixed(1)}%</div><div class="kpi-sub">Weighted annual estimate</div></div>
   `;
 
-  const maxV=Math.max(sim.best,goal,grow)*1.05;
-  const gp=(goal/maxV*100).toFixed(1);
-  document.getElementById('r-bars').innerHTML=`
-    <div style="position:relative;padding-top:24px;">
-      <div class="bar-row"><div class="bar-lbl">Worst Case</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"><div class="goal-marker-label">Goal</div></div><div class="bar-fill" id="b-worst" style="background:rgba(224,85,85,0.25);color:#ffaaaa;"></div></div></div>
-      <div class="bar-row"><div class="bar-lbl">Likely</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-likely" style="background:rgba(0,196,160,0.2);color:var(--teal);"></div></div></div>
-      <div class="bar-row"><div class="bar-lbl">Best Case</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-best" style="background:rgba(232,160,0,0.2);color:var(--gold);"></div></div></div>
-      <div class="bar-row"><div class="bar-lbl">With Growth</div><div class="bar-wrap"><div class="goal-marker" style="left:${gp}%"></div><div class="bar-fill" id="b-grow" style="background:rgba(167,139,250,0.2);color:#c4b5fd;"></div></div></div>
-    </div>
-    <div style="font-size:0.68rem;color:var(--text-dim);margin-top:8px;">Gold vertical line marks your retirement goal of ${fmt(goal)}</div>
-  `;
+  // Corpus bars
+  const maxV=Math.max(sim.best,goal,grow)*1.05;const gp=(goal/maxV*100).toFixed(1);
+  const bars=[
+    {id:'worst',label:'Worst Case',val:sim.worst,bg:'rgba(220,38,38,.12)',color:'#dc2626'},
+    {id:'likely',label:'Likely',val:sim.likely,bg:'rgba(37,99,235,.12)',color:'#2563eb'},
+    {id:'best',label:'Best Case',val:sim.best,bg:'rgba(22,163,74,.12)',color:'#16a34a'},
+    {id:'grow',label:'With Growth',val:grow,bg:'rgba(124,58,237,.12)',color:'#7c3aed'},
+  ];
+  document.getElementById('r-bars').innerHTML=`<div style="position:relative;padding-top:26px;">${bars.map(b=>`<div class="corpus-bar-row"><div class="cbr-label">${b.label}</div><div class="cbr-track"><div class="goal-line" style="left:${gp}%"><div class="goal-line-label">Goal</div></div><div class="cbr-fill" id="cb-${b.id}" style="background:${b.bg};color:${b.color}"></div></div><div class="cbr-val" style="color:${b.color}">${fmt(b.val)}</div></div>`).join('')}</div><div style="font-size:.68rem;color:var(--text-dim);margin-top:8px;">Gold line = your goal of ${fmt(goal)}</div>`;
+  setTimeout(()=>bars.forEach(b=>{const el=document.getElementById('cb-'+b.id);if(el){el.style.width=(Math.min(b.val,maxV)/maxV*100)+'%';el.textContent=fmt(b.val);}}),150);
+
+  // Milestones
+  const mAges=[35,40,45,50].filter(a=>a>age&&a<60);
+  if(mAges.length<2)[5,10,15,20].filter(y=>y<ytr).forEach(y=>mAges.push(age+y));
+  document.getElementById('r-milestones').innerHTML=mAges.slice(0,4).map(a=>`<div class="milestone-cell"><div class="mc-age">Age ${a}</div><div class="mc-val">${fmt(corpusAt(investable,a-age,wr))}</div><div class="mc-yr">In ${a-age} years</div></div>`).join('');
+
+  // Charts
   setTimeout(()=>{
-    document.getElementById('b-worst').style.width=(sim.worst/maxV*100)+'%';document.getElementById('b-worst').textContent=fmt(sim.worst);
-    document.getElementById('b-likely').style.width=(sim.likely/maxV*100)+'%';document.getElementById('b-likely').textContent=fmt(sim.likely);
-    document.getElementById('b-best').style.width=(sim.best/maxV*100)+'%';document.getElementById('b-best').textContent=fmt(sim.best);
-    document.getElementById('b-grow').style.width=(Math.min(grow,maxV)/maxV*100)+'%';document.getElementById('b-grow').textContent=fmt(grow);
-  },150);
+    buildGrowthChart(investable,ytr,wr,growth,age);
+    buildDistChart(sim.all);
+    buildAllocChart(alloc);
+    const expItems=[['Rent/EMI',rent+emi],['Groceries',grocer],['Utilities',utils],['Lifestyle',Math.round(lsSpend)],['Dependents',depCost],['Buffer',Math.round(surplus*.20)],['SIP',investable]].filter(i=>i[1]>0);
+    buildExpChart(expItems);
+  },300);
 
-  document.getElementById('r-alloc').innerHTML=Object.entries(alloc).map(([k,v])=>`
-    <div class="alloc-item"><div class="alloc-dot" style="background:${COLORS[k]||'#888'}"></div><div class="alloc-name">${k.replace('_',' ')}</div><div class="alloc-pct" style="color:${COLORS[k]||'var(--text)'}">${v}%</div></div>
-    <div class="alloc-bar-bg"><div class="alloc-bar-fg" style="width:${v}%;background:${COLORS[k]||'#888'};"></div></div>
+  // Allocation
+  document.getElementById('r-alloc').innerHTML=Object.entries(alloc).map(([k,v],i)=>`
+    <div class="alloc-tr"><div class="alloc-dot" style="background:${PALETTE_ARR[i]}"></div><div class="alloc-name">${k.replace('_',' ')}</div><div class="alloc-pct" style="color:${PALETTE_ARR[i]}">${v}%</div><div class="alloc-amt">${fmt(investable*v/100)}/mo</div></div>
+    <div class="alloc-bar-row"><div class="alloc-bar-bg"><div class="alloc-bar-fg" style="width:${v}%;background:${PALETTE_ARR[i]}"></div></div></div>
   `).join('');
 
-  const items=[['Rent and EMI',rent+emi],['Groceries and Food',grocer],['Bills and Utilities',utils],['Lifestyle',Math.round(lsSpend)],['Dependents',depCost],['Liquid Buffer',Math.round(surplus*0.20)],['Monthly SIP',investable]];
-  document.getElementById('r-breakdown').innerHTML=items.map(([cat,amt])=>`
-    <div class="expense-row">
-      <div><div class="expense-cat">${cat}</div><div class="expense-pct">${income>0?((amt/income)*100).toFixed(1):0}% of income</div></div>
-      <div class="expense-amt" style="color:${cat==='Monthly SIP'?'var(--teal)':cat==='Liquid Buffer'?'var(--gold)':'var(--text)'}">${fmt(amt)}</div>
-    </div>
-  `).join('')+`<div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:12px;display:flex;justify-content:space-between;"><div style="font-size:0.72rem;color:var(--text-mid);">Total Monthly Income</div><div style="font-family:'Syne',sans-serif;font-weight:800;">${fmt(income)}</div></div>`;
+  // Breakdown
+  const expR=[['Rent & EMI',rent+emi,'#dc2626'],['Groceries & Food',grocer,'#2563eb'],['Bills & Utilities',utils,'#7c3aed'],['Lifestyle',Math.round(lsSpend),'#db2777'],['Dependents',depCost,'#d97706'],['Liquid Buffer',Math.round(surplus*.20),'#d97706'],['Monthly SIP',investable,'#16a34a']].filter(r=>r[1]>0);
+  document.getElementById('r-breakdown').innerHTML=expR.map(([cat,amt,clr])=>`<div class="exp-row"><div class="er-left"><div class="er-dot" style="background:${clr}"></div><div><div class="er-label">${cat}</div><div class="er-pct">${income>0?((amt/income)*100).toFixed(1):0}% of income</div></div></div><div class="er-amt" style="color:${clr}">${fmt(amt)}</div></div>`).join('')+`<div class="exp-row"><div class="er-left"><div class="er-label" style="font-weight:700;color:var(--text)">Total Monthly Income</div></div><div class="er-amt">${fmt(income)}</div></div>`;
 
-  document.getElementById('r-tax').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-      <div class="kpi"><div class="kpi-label">Tax Bracket</div><div class="kpi-val gold">${Math.round(bracket*100)}%</div></div>
-      <div class="kpi"><div class="kpi-label">ELSS Eligible per Year</div><div class="kpi-val gold">${fmt(elssAmt)}</div></div>
-      <div class="kpi accent"><div class="kpi-label">Tax Saved per Year</div><div class="kpi-val teal">${fmt(taxSaved)}</div></div>
-      <div class="kpi"><div class="kpi-label">Section 80C Limit</div><div class="kpi-val">Rs 1.50 L</div></div>
-    </div>
-    <div style="font-size:0.8rem;color:var(--text-mid);line-height:1.8;">By routing your equity allocation into ELSS mutual funds, you save ${fmt(taxSaved)} in taxes per year. ELSS has a 3-year lock-in — the shortest among all 80C instruments — and delivers equity-level returns. Over ${ytr} years, this annual saving compounded could add roughly ${fmt(taxSaved*ytr*1.3)} in additional wealth.</div>
+  // Tax
+  document.getElementById('r-tax-kpis').innerHTML=`
+    <div class="kpi-card"><div class="kpi-label">Tax Bracket</div><div class="kpi-val gold">${Math.round(bracket*100)}%</div><div class="kpi-sub">Annual income: ${fmt(annInc)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">ELSS eligible / Year</div><div class="kpi-val primary">${fmt(elssAmt)}</div><div class="kpi-sub">80C limit: ₹1,50,000</div></div>
+    <div class="kpi-card accent-green"><div class="kpi-label">Tax saved / Year</div><div class="kpi-val green">${fmt(taxSaved)}</div><div class="kpi-sub">Via ELSS under Section 80C</div></div>
+    <div class="kpi-card"><div class="kpi-label">Extra via NPS 80CCD</div><div class="kpi-val">${fmt(Math.round(50000*bracket))}</div><div class="kpi-sub">On ₹50,000 NPS contribution</div></div>
   `;
+  document.getElementById('r-tax-body').innerHTML=`By routing your equity allocation into <strong>ELSS mutual funds</strong>, you save <strong style="color:var(--green)">${fmt(taxSaved)}</strong> in taxes per year. ELSS has a <strong>3-year lock-in</strong> — shortest among all 80C instruments — while delivering equity-level returns. Additionally, a ₹50,000 NPS Tier-1 contribution under Section 80CCD(1B) saves another <strong style="color:var(--green)">${fmt(Math.round(50000*bracket))}</strong>. Over ${ytr} years, these tax savings compounded could add roughly <strong style="color:var(--primary)">${fmt((taxSaved+Math.round(50000*bracket))*ytr*1.4)}</strong> in additional wealth.`;
 
-  buildWhere(alloc, investable, selRisk, ytr, annInc);
+  // Where & Plan
+  buildWhere(alloc,investable,selRisk);
+  buildPlan(alloc,investable,surplus,savings,efReq,highCost,gap,ytr,taxSaved,growth,income,bracket);
 }
 
-function showTab(name,btn){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  btn.classList.add('active');
+// ── TABS ──────────────────────────────────────────────────────────────
+function showTab(name,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');btn.classList.add('active');}
+
+// ── ACTION PLAN ───────────────────────────────────────────────────────
+function buildPlan(alloc,investable,surplus,savings,efReq,highCost,gap,ytr,taxSaved,growth,income,bracket){
+  const items=[];let step=1;
+  if(highCost.length>0)items.push({n:step++,col:'red',title:'Clear high-interest loans first',desc:`You have loans above 12% interest — these cost more than equity returns. Direct any bonus or increment toward clearing ${highCost.map(l=>l.type).join(', ')} before increasing SIP.`,when:'This week — top priority'});
+  if(savings<efReq)items.push({n:step++,col:'red',title:'Build your 6-month emergency fund',desc:`You need ${fmt(efReq)} as a buffer. At your current rate of ${fmt(Math.round(surplus*.2))}/month buffer, this takes ~${Math.ceil((efReq-savings)/(surplus*.2))} months. Keep it in a liquid FD or money market fund — not a savings account.`,when:'Start immediately — before investing more'});
+  items.push({n:step++,col:'green',title:'Buy health insurance',desc:`Minimum cover: ₹10 lakh for individuals, ₹25 lakh for families. Monthly premium: ~₹500–₹1,500 for your age. Top picks: Niva Bupa ReAssure 2.0 or HDFC ERGO Optima Secure.`,when:'This month — do not delay'});
+  items.push({n:step++,col:'primary',title:'Start ELSS SIP — exhaust Section 80C',desc:`Put ${fmt(Math.min(Math.round(investable*alloc.equity/100),Math.round(150000/12)))}/month into an ELSS fund like Mirae Asset Tax Saver. This exhausts your ₹1.5L 80C limit and saves ${fmt(taxSaved)}/year in taxes.`,when:'This month — set up SIP on Groww or Kuvera'});
+  items.push({n:step++,col:'primary',title:'Add remaining equity SIP',desc:`Put ${fmt(Math.round(investable*alloc.equity/100))}/month total into equity. After ELSS, route the rest into Parag Parikh Flexi Cap or NIFTYBEES ETF. Set up auto-debit on the 5th of each month.`,when:'Month 1 — same time as ELSS'});
+  items.push({n:step++,col:'gold',title:'Set up gold allocation',desc:`Invest ${fmt(Math.round(investable*alloc.gold/100))}/month. Buy Sovereign Gold Bonds (SGB) when RBI opens windows (rbi.org.in). Otherwise use Nippon GOLDBEES ETF on Zerodha.`,when:'Month 1–2'});
+  items.push({n:step++,col:'green',title:'Open FD or debt MF SIP',desc:`Park ${fmt(Math.round(investable*alloc.fd/100))}/month in safe instruments. SBI FD for emergency top-up, then HDFC Low Duration Fund for liquid parking.`,when:'Month 2'});
+  items.push({n:step++,col:'primary',title:'Open NPS Tier-1 for extra ₹50,000 deduction',desc:`Over your ₹1.5L 80C, NPS gives ₹50,000 more deduction under 80CCD(1B) — saving ${fmt(Math.round(50000*bracket))} more in taxes. Choose equity (Tier-1 E). Locked till age 60.`,when:'Month 2–3'});
+  items.push({n:step++,col:'green',title:'Set annual SIP step-up reminder',desc:`Every April, increase your SIP by ${growth}% to match your salary increment. A ${growth}% annual step-up on ${fmt(investable)}/month could add crores to your final corpus. Set a Google Calendar reminder now.`,when:'Every April'});
+  if(gap>0)items.push({n:step++,col:'red',urgent:true,title:'Close the gap to your retirement goal',desc:`Your corpus falls short by ${fmt(gap)}. To close it: increase monthly SIP by ${fmt(Math.round(gap/(ytr*12)))}, OR reduce expenses by ${fmt(Math.round(gap/(ytr*12)/.8))}/month, OR extend working by 2–3 years.`,when:'Review every 6 months'});
+  const colors={primary:'var(--primary)',green:'var(--green)',red:'var(--red)',gold:'var(--gold)'};
+  document.getElementById('r-action').innerHTML=items.map(item=>`<div class="action-item ${item.urgent?'urgent':''}"><div class="action-num ${item.col}" style="background:${colors[item.col]}">${item.n}</div><div class="action-body"><div class="action-title">${item.title}</div><div class="action-desc">${item.desc}</div><div class="action-when">⏱ ${item.when}</div></div></div>`).join('');
 }
 
-function wiToggle(id){
-  const body=document.getElementById('wi-body-'+id);
-  const chev=document.getElementById('wi-chev-'+id);
-  body.classList.toggle('open');
-  chev.classList.toggle('open');
-}
-
-function wiCard(name,tag,tagColor,stats,platform,pick,note){
-  return `<div class="wi-card${pick?' pick':''}">
-    <div class="wi-card-name">${name}</div>
-    <span class="wi-tag" style="background:${tagColor}22;color:${tagColor}">${tag}</span>
-    <div class="wi-stat">${stats}</div>
-    <div class="wi-platform"><span class="wi-platform-label">Via</span><span class="wi-platform-val">${platform}</span></div>
-    ${note?`<div style="font-size:.62rem;color:var(--text-dim);margin-top:8px;line-height:1.6;">${note}</div>`:''}
-  </div>`;
-}
-
-function buildWhere(alloc, investable, risk, ytr, annInc){
-  const f=n=>fmt(n);
-  const buckets=[];
-
-  // ── EQUITY ──────────────────────────────────────────────────────────
+// ── WHERE TO INVEST ───────────────────────────────────────────────────
+function wiToggle(id){const b=document.getElementById('wb-'+id);const c=document.getElementById('wc-'+id);b.classList.toggle('open');c.classList.toggle('open');}
+function wCard(name,tag,tagBg,tagColor,stats,via,top,note){return`<div class="wi-card${top?' top-pick':''}"><div class="wc-name">${name}</div><span class="wc-tag" style="background:${tagBg};color:${tagColor}">${tag}</span><div class="wc-stats">${stats}</div><div class="wc-platform"><span class="wcp-label">Via</span><span class="wcp-val">${via}</span></div>${note?`<div class="wc-note">${note}</div>`:''}</div>`;}
+function buildWhere(alloc,investable,risk){
+  const f=fmt;const buckets=[];
   const eqAmt=Math.round(investable*(alloc.equity/100));
   if(eqAmt>0){
-    const elssAmt=Math.min(eqAmt,Math.round(150000/12));
-    const directAmt=eqAmt-elssAmt;
-
-    let mfCards='', stockCards='', etfCards='';
-
+    const elssAmt=Math.min(eqAmt,Math.round(150000/12));const directAmt=eqAmt-elssAmt;
+    let mf='',etf='',stocks='';
     if(risk==='aggressive'){
-      mfCards=
-        wiCard('Parag Parikh Flexi Cap','Flexi Cap','#00c4a0',
-          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Global exposure','Groww / Kuvera',true,'Best all-weather fund. Holds Indian + US stocks (Google, Meta). Survives Indian market crashes.')+
-        wiCard('Nippon India Small Cap','Small Cap','#00c4a0',
-          '<b>~22% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 500/mo · Very high risk','Zerodha Coin',false,'Highest return potential for 7+ year horizons. Expect 40–50% drawdowns in bad years — stay invested.')+
-        wiCard('Kotak Emerging Equity','Mid Cap','#00c4a0',
-          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Moderate-high risk','Groww / Kuvera',false,'Sweet spot between large and small cap. Better returns than Nifty with manageable volatility.');
-      etfCards=
-        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
-          '<b>~15% CAGR (10Y)</b> · No lock-in<br>Expense ratio: 0.04% · Very low cost','Zerodha / Upstox',false,'Buy Nifty 50 like a stock. Cheapest way to own India\'s top 50 companies.')+
-        wiCard('Nifty Next 50 ETF (JUNIORBEES)','Index ETF','#4a90e2',
-          '<b>~16% CAGR (10Y)</b> · No lock-in<br>Min: 1 unit via exchange','Zerodha / Groww',false,'The 51st–100th largest Indian companies — tomorrow\'s Nifty 50. Higher growth, slightly more volatile.');
-      stockCards=
-        wiCard('Reliance Industries','Blue Chip Stock','#f472b6',
-          '<b>NSE: RELIANCE</b> · Conglomerate<br>Market cap: Rs 17L Cr · Diversified','Zerodha / Groww',false,'Energy, retail, telecom — if India grows, Reliance grows.')+
-        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
-          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE · Low NPA','Zerodha / Upstox',true,'India\'s most trusted private bank. Stable compounder over 10+ years.')+
-        wiCard('Infosys','Blue Chip Stock','#f472b6',
-          '<b>NSE: INFY</b> · IT Services<br>Strong USD revenue · Dividend payer','Zerodha / Groww',false,'Exports software globally. Natural hedge if rupee depreciates.')+
-        wiCard('Tata Motors (DVR)','Growth Stock','#f472b6',
-          '<b>NSE: TATAMTRDVR</b> · Auto + EV<br>Jaguar Land Rover exposure','Zerodha / Upstox',false,'EV play with global exposure via JLR. Higher risk, higher upside.');
+      mf=wCard('Parag Parikh Flexi Cap','Flexi Cap','#dbeafe','#1d4ed8','<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: ₹1,000/mo · Global exposure','Groww / Kuvera',true,'Best all-weather fund. Holds Indian + US stocks. Survives market crashes well.')+wCard('Nippon India Small Cap','Small Cap','#dcfce7','#15803d','<b>~22% CAGR (5Y)</b> · No lock-in<br>Min SIP: ₹500/mo · Very high risk','Zerodha Coin',false,'Highest returns for 7+ year horizons. Expect 40–50% drawdowns — stay invested.')+wCard('Kotak Emerging Equity','Mid Cap','#f3e8ff','#6d28d9','<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: ₹1,000/mo','Groww / Kuvera',false,'Sweet spot between large and small cap.');
+      etf=wCard('NIFTYBEES','Nifty 50 ETF','#dbeafe','#1d4ed8','<b>~15% CAGR (10Y)</b> · 0.04% expense ratio<br>Buy on NSE like a stock','Zerodha / Upstox',false,'Cheapest way to own India\'s top 50 companies.')+wCard('JUNIORBEES','Nifty Next 50 ETF','#dbeafe','#1d4ed8','<b>~16% CAGR (10Y)</b><br>51st–100th largest companies','Zerodha / Groww',false,'Tomorrow\'s Nifty 50. Higher growth, slightly more volatile.');
+      stocks=wCard('HDFC Bank','NSE: HDFCBANK','#fce7f3','#9d174d','Private Bank · 18%+ ROE<br>India\'s most reliable compounder','Zerodha / Groww',true,'Buy and hold forever.')+wCard('Reliance Industries','NSE: RELIANCE','#fce7f3','#9d174d','Conglomerate · ₹17L Cr mkt cap<br>Energy, Retail, Telecom','Zerodha / Upstox',false,'If India grows, Reliance grows.')+wCard('Infosys','NSE: INFY','#fce7f3','#9d174d','IT Services · USD revenue<br>Strong dividends','Zerodha / Groww',false,'Natural hedge if rupee depreciates.')+wCard('Tata Motors DVR','NSE: TATAMTRDVR','#fce7f3','#9d174d','Auto + EV · JLR exposure','Zerodha / Upstox',false,'EV play with global exposure via JLR.');
     } else if(risk==='moderate'){
-      mfCards=
-        wiCard('Parag Parikh Flexi Cap','Flexi Cap','#00c4a0',
-          '<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo · Moderate risk','Groww / Kuvera',true,'Globally diversified. Holds Indian blue chips + US tech stocks. Best moderate fund.')+
-        wiCard('Mirae Asset Large & Mid Cap','Large & Mid Cap','#00c4a0',
-          '<b>~17% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 1,000/mo','Zerodha Coin',false,'50% large cap safety + 50% mid cap growth. Good middle-ground fund.')+
-        wiCard('ICICI Pru Bluechip Fund','Large Cap','#00c4a0',
-          '<b>~15% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 100/mo · Low volatility','Groww / Kuvera',false,'Steady compounder. Lower drawdowns in market crashes than flexi/mid cap.');
-      etfCards=
-        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
-          '<b>~15% CAGR (10Y)</b> · 0.04% expense ratio<br>Buy on NSE like a stock','Zerodha / Upstox',false,'Passively track Nifty 50. No fund manager risk. Lower cost than active funds.');
-      stockCards=
-        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
-          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE','Zerodha / Groww',true,'India\'s most reliable compounder. Buy and hold forever.')+
-        wiCard('TCS','Blue Chip Stock','#f472b6',
-          '<b>NSE: TCS</b> · IT Exports<br>USD revenue · Strong dividends','Zerodha / Upstox',false,'Tata\'s IT giant. Defensive pick — earns in dollars, benefits if rupee weakens.')+
-        wiCard('Asian Paints','Blue Chip Stock','#f472b6',
-          '<b>NSE: ASIANPAINT</b> · Consumer<br>Dominant market share','Groww / Zerodha',false,'40% market share in paints. Pricing power, low debt, consistent growth for 20+ years.');
+      mf=wCard('Parag Parikh Flexi Cap','Flexi Cap','#dbeafe','#1d4ed8','<b>~19% CAGR (5Y)</b> · No lock-in<br>Min SIP: ₹1,000/mo','Groww / Kuvera',true,'Globally diversified. Holds Indian blue chips + US tech stocks.')+wCard('Mirae Asset Large & Mid Cap','Large & Mid Cap','#dcfce7','#15803d','<b>~17% CAGR (5Y)</b><br>Min SIP: ₹1,000/mo','Zerodha Coin',false,'50% large cap safety + 50% mid cap growth.')+wCard('ICICI Pru Bluechip','Large Cap','#dbeafe','#1d4ed8','<b>~15% CAGR (5Y)</b><br>Min SIP: ₹100/mo · Low volatility','Groww / Kuvera',false,'Steady compounder. Lower drawdowns in crashes.');
+      etf=wCard('NIFTYBEES','Nifty 50 ETF','#dbeafe','#1d4ed8','<b>~15% CAGR (10Y)</b> · 0.04% expense ratio','Zerodha / Upstox',false,'Passive, zero manager risk, lowest cost.');
+      stocks=wCard('HDFC Bank','NSE: HDFCBANK','#fce7f3','#9d174d','Private Bank · 18%+ ROE','Zerodha / Groww',true,'India\'s most reliable 20-year compounder.')+wCard('TCS','NSE: TCS','#fce7f3','#9d174d','IT Exports · USD revenue<br>Strong dividends','Zerodha / Upstox',false,'Earns in dollars, benefits if rupee weakens.')+wCard('Asian Paints','NSE: ASIANPAINT','#fce7f3','#9d174d','Consumer · 40% market share<br>Pricing power · Low debt','Groww / Zerodha',false,'40% market share. Consistent 20+ year compounder.');
     } else {
-      mfCards=
-        wiCard('ICICI Pru Bluechip Fund','Large Cap','#00c4a0',
-          '<b>~15% CAGR (5Y)</b> · No lock-in<br>Min SIP: Rs 100/mo · Low volatility','Groww / Kuvera',true,'Lowest risk among equity mutual funds. Sticks to Nifty 50 companies only.')+
-        wiCard('Mirae Asset Tax Saver (ELSS)','ELSS · 80C','#a78bfa',
-          '<b>~17% CAGR (5Y)</b> · 3-year lock-in<br>Min SIP: Rs 500/mo','Zerodha Coin',false,'Use for your 80C limit. 3-year lock-in forces you to stay invested — good for conservative investors.');
-      etfCards=
-        wiCard('Nifty 50 Index ETF (NIFTYBEES)','Index ETF','#4a90e2',
-          '<b>~15% CAGR (10Y)</b> · 0.04% expense ratio','Zerodha / Upstox',false,'Safest equity option. Zero manager risk, lowest cost, tracks the top 50 Indian companies.');
-      stockCards=
-        wiCard('HDFC Bank','Blue Chip Stock','#f472b6',
-          '<b>NSE: HDFCBANK</b> · Private Bank<br>Consistent 18%+ ROE','Zerodha / Groww',true,'Most stable Indian stock over the past 20 years. Low risk for a stock.')+
-        wiCard('ITC','Dividend Stock','#f472b6',
-          '<b>NSE: ITC</b> · FMCG + Hotels<br>Dividend yield ~3–4%','Zerodha / Upstox',false,'High dividend payer. More like a fixed income investment but with upside. Suits conservative investors.');
+      mf=wCard('ICICI Pru Bluechip','Large Cap','#dbeafe','#1d4ed8','<b>~15% CAGR (5Y)</b><br>Min SIP: ₹100/mo · Low volatility','Groww / Kuvera',true,'Lowest risk equity fund. Sticks to Nifty 50 companies only.')+wCard('Mirae Asset Tax Saver','ELSS · 80C','#f3e8ff','#6d28d9','<b>~17% CAGR (5Y)</b> · 3-year lock-in<br>Min SIP: ₹500/mo','Zerodha Coin',false,'Use for 80C. Lock-in forces patience — good for conservative investors.');
+      etf=wCard('NIFTYBEES','Nifty 50 ETF','#dbeafe','#1d4ed8','<b>~15% CAGR (10Y)</b> · 0.04% expense ratio','Zerodha / Upstox',false,'Safest equity. Zero manager risk, lowest cost.');
+      stocks=wCard('HDFC Bank','NSE: HDFCBANK','#fce7f3','#9d174d','Most stable stock · 20Y compounder<br>18%+ ROE','Zerodha / Groww',true,'Low risk for a stock. Conservative-friendly.')+wCard('ITC','NSE: ITC','#fce7f3','#9d174d','FMCG + Hotels<br>Dividend yield ~3–4%','Zerodha / Upstox',false,'High dividend. More like fixed income with upside.');
     }
-
-    const elssCard=wiCard('Mirae Asset ELSS Tax Saver','ELSS · Section 80C','#a78bfa',
-      `<b>Up to Rs ${Math.round(150000/12).toLocaleString('en-IN')}/mo</b> tax-free<br>3-year lock-in · ~17% CAGR (5Y)`,'Groww / Kuvera',false,
-      'Route your equity SIP here first to exhaust your Rs 1.5L 80C limit before investing in regular equity funds.');
-
-    buckets.push({
-      id:'eq', color:'#00c4a0', title:'Equity', sub:'Stocks · Mutual Funds · ETFs · ELSS',
-      amt:eqAmt, pct:alloc.equity,
-      body:`
-        <div class="wi-split">Split your <strong>${f(eqAmt)}/month</strong> as: <strong>${f(elssAmt)}</strong> → ELSS (exhaust 80C first) + <strong>${f(Math.max(directAmt,0))}</strong> → Flexi Cap / Index ETF / Direct Stocks</div>
-        <div class="wi-section-title">Mutual Funds (SIP)</div>
-        <div class="wi-cards">${mfCards}${elssCard}</div>
-        <div class="wi-section-title">Index ETFs (buy on exchange)</div>
-        <div class="wi-cards">${etfCards}</div>
-        <div class="wi-section-title">Direct Stocks (optional · 10–15% of equity bucket)</div>
-        <div class="wi-cards">${stockCards}</div>
-        <div class="wi-why"><b>Strategy</b>Put 60–70% of equity into a Flexi Cap SIP (hands-off). Use 20% for an Index ETF (cheapest). Reserve 10–15% for direct stocks only if you enjoy researching companies — otherwise skip.</div>
-      `
-    });
+    const elssCard=wCard('Mirae Asset ELSS Tax Saver','ELSS · Section 80C','#f3e8ff','#6d28d9',`<b>Up to ${f(Math.round(150000/12))}/mo</b> tax-saving<br>3-year lock-in · ~17% CAGR`,'Groww / Kuvera',false,'Route equity SIP here first to exhaust ₹1.5L 80C limit.');
+    buckets.push({id:'eq',color:'#2563eb',title:'Equity',sub:'Mutual Funds · ETFs · Stocks · ELSS',amt:eqAmt,pct:alloc.equity,body:`<div class="wi-split-note">Split <strong>${f(eqAmt)}/month</strong>: <strong>${f(elssAmt)}</strong> → ELSS (exhaust 80C first) + <strong>${f(Math.max(directAmt,0))}</strong> → Flexi Cap / Index ETF / Stocks</div><div class="wi-section-hd">Mutual Funds (SIP)</div><div class="wi-cards">${mf}${elssCard}</div><div class="wi-section-hd">Index ETFs — buy on NSE like a stock</div><div class="wi-cards">${etf}</div><div class="wi-section-hd">Direct Stocks — optional, max 15% of equity</div><div class="wi-cards">${stocks}</div><div class="wi-why"><b>Strategy</b>Put 60–70% into a Flexi Cap SIP (hands-off). 20% into Index ETF (cheapest). 10–15% into direct stocks only if you enjoy researching — otherwise skip stocks entirely.</div>`});
   }
-
-  // ── GOLD ────────────────────────────────────────────────────────────
   const goldAmt=Math.round(investable*(alloc.gold/100));
   if(goldAmt>0){
-    const sgbCards=
-      wiCard('Sovereign Gold Bond (SGB)','Govt. Bond · RBI','#e8a000',
-        '<b>Gold price appreciation + 2.5% p.a.</b> interest<br>8-year tenure · Tax-free on maturity','RBI Retail Direct / HDFC Bank',true,'Best gold investment in India. You earn gold returns PLUS 2.5% interest. Zero making charges. Tax-free if held to maturity. Buy during RBI issue windows.')+
-      wiCard('Nippon India Gold ETF (GOLDBEES)','Gold ETF','#e8a000',
-        '<b>Tracks gold price live</b><br>No lock-in · Expense: 0.54%<br>Buy/sell like a stock on NSE','Zerodha / Upstox',false,'Best if you want liquidity. Price moves 1:1 with gold. No storage risk, no making charges. Min 1 unit (~Rs 60).')+
-      wiCard('Digital Gold','Digital Asset','#e8a000',
-        '<b>24K pure gold</b> · Start with Rs 1<br>MMTC-PAMP backed · No lock-in','Groww / PhonePe / Paytm',false,'For small amounts (under Rs 1,000/mo). Higher charges than ETF/SGB long-term. Good for beginners.');
-    buckets.push({
-      id:'gold', color:'#e8a000', title:'Gold', sub:'SGB · ETF · Digital Gold',
-      amt:goldAmt, pct:alloc.gold,
-      body:`
-        <div class="wi-split">Invest <strong>${f(goldAmt)}/month</strong>. Priority: SGB when RBI opens issuance → Gold ETF for monthly SIP → Digital Gold for micro-amounts.</div>
-        <div class="wi-section-title">Where to put your gold money</div>
-        <div class="wi-cards">${sgbCards}</div>
-        <div class="wi-why"><b>Strategy</b>SGBs are the clear winner for long-term gold (8 years+) — you get gold returns plus 2.5% interest, and zero tax on maturity. For monthly SIP-style investing, Gold ETF via Zerodha is the best alternative since SGBs aren't always available. Avoid jewellery and physical gold entirely.</div>
-      `
-    });
+    const goldCards=wCard('Sovereign Gold Bond (SGB)','Govt. Bond · RBI','#fef3c7','#92400e','<b>Gold appreciation + 2.5% p.a. interest</b><br>8-year tenure · Tax-free at maturity','RBI Retail Direct / HDFC Bank',true,'Best gold investment. Gold returns PLUS 2.5% interest. Zero making charges. Tax-free at maturity.')+wCard('Nippon India Gold ETF (GOLDBEES)','Gold ETF','#fef3c7','#92400e','<b>Tracks gold price live</b> · 0.54% expense<br>No lock-in · Min 1 unit (~₹60)','Zerodha / Upstox',false,'Best for monthly SIP-style buying. Tracks gold 1:1. No storage risk.')+wCard('Digital Gold','Digital · 24K Pure','#fef3c7','#92400e','<b>Start with ₹1</b> · MMTC-PAMP backed<br>No lock-in · Higher charges long-term','Groww / PhonePe',false,'For small amounts under ₹1,000/mo. Good for beginners.');
+    buckets.push({id:'gold',color:'#d97706',title:'Gold',sub:'SGB · ETF · Digital Gold',amt:goldAmt,pct:alloc.gold,body:`<div class="wi-split-note">Invest <strong>${f(goldAmt)}/month</strong>. Priority: SGB when RBI issues → Gold ETF for monthly SIP → Digital Gold for micro-amounts only.</div><div class="wi-section-hd">Gold options — ranked by cost efficiency</div><div class="wi-cards">${goldCards}</div><div class="wi-why"><b>Strategy</b>SGBs are best long-term — gold returns plus 2.5% interest, tax-free at maturity. For monthly SIP, Gold ETF via Zerodha. Avoid physical gold and jewellery — making charges eat returns.</div>`});
   }
-
-  // ── FIXED DEPOSIT / DEBT ─────────────────────────────────────────────
   const fdAmt=Math.round(investable*(alloc.fd/100));
   if(fdAmt>0){
-    const fdCards=
-      wiCard('SBI Fixed Deposit','Govt. Bank FD','#4a90e2',
-        '<b>6.8–7.1% p.a.</b> (1–5 yr)<br>Safest FD in India · TDS applies','SBI YONO App / Branch',true,'Sovereign guarantee effectively. Lowest risk. Good for your emergency buffer or capital protection portion.')+
-      wiCard('IDFC First Bank FD','Small Finance Bank FD','#4a90e2',
-        '<b>7.75–8.25% p.a.</b> (1–3 yr)<br>DICGC insured up to Rs 5L','IDFC First Mobile App',false,'Higher rate than PSU banks. DICGC insured (safe up to Rs 5L). Good for medium-term parking.')+
-      wiCard('RBI Floating Rate Savings Bond','Govt. Bond','#4a90e2',
-        '<b>8.05% p.a.</b> (current) · 7-year lock<br>Linked to NSC rate · No TDS','RBI Retail Direct',false,'Better than most FDs. Rate floats every 6 months. No TDS deducted. Ideal for conservative investors with 7-year horizon.')+
-      wiCard('Post Office Monthly Income Scheme','Govt. Scheme','#4a90e2',
-        '<b>7.4% p.a.</b> paid monthly<br>Max Rs 9L (single) · 5-year lock','Post Office / India Post App',false,'Sends interest to your account every month. Useful if you need regular income from your investments.');
-    buckets.push({
-      id:'fd', color:'#4a90e2', title:'Fixed Deposits & Bonds', sub:'FD · RBI Bonds · Post Office Schemes',
-      amt:fdAmt, pct:alloc.fd,
-      body:`
-        <div class="wi-split">Park <strong>${f(fdAmt)}/month</strong> in safe, guaranteed-return instruments. Build to a lump sum then place FDs — or use recurring deposits (RD) at your bank for monthly auto-deposit.</div>
-        <div class="wi-section-title">Fixed income options</div>
-        <div class="wi-cards">${fdCards}</div>
-        <div class="wi-why"><b>Strategy</b>Use SBI or HDFC FD for your liquid emergency buffer (up to Rs 5L). Move anything beyond that to RBI Bonds (8.05%) for better rates. IDFC / Ujjivan Small Finance Bank FDs offer 8%+ but keep each below Rs 5L (DICGC insurance limit).</div>
-      `
-    });
+    const fdCards=wCard('SBI Fixed Deposit','Govt. Bank FD','#dcfce7','#166534','<b>6.8–7.1% p.a.</b> (1–5 yr)<br>Safest FD in India · TDS applies','SBI YONO App',true,'Sovereign guarantee. Lowest risk. Best for emergency buffer.')+wCard('IDFC First Bank FD','Small Finance Bank','#dcfce7','#166534','<b>7.75–8.25% p.a.</b> (1–3 yr)<br>DICGC insured up to ₹5L','IDFC First App',false,'Higher rate than PSU banks. Safe up to ₹5L.')+wCard('RBI Floating Rate Bond','Govt. Bond','#dcfce7','#166534','<b>8.05% p.a.</b> · 7-year lock<br>Linked to NSC · No TDS','RBI Retail Direct',false,'Better than most FDs. Rate floats every 6 months. No TDS.')+wCard('Post Office MIS','Govt. Scheme','#dcfce7','#166534','<b>7.4% p.a.</b> paid monthly<br>Max ₹9L · 5-year lock','India Post App',false,'Sends interest every month. Good if you need regular income.');
+    buckets.push({id:'fd',color:'#16a34a',title:'Fixed Deposits & Bonds',sub:'FD · RBI Bonds · Post Office',amt:fdAmt,pct:alloc.fd,body:`<div class="wi-split-note">Park <strong>${f(fdAmt)}/month</strong> via Recurring Deposit (RD) — auto-deducts monthly like a SIP.</div><div class="wi-section-hd">Fixed income options</div><div class="wi-cards">${fdCards}</div><div class="wi-why"><b>Strategy</b>SBI FD for emergency buffer (up to ₹5L). RBI Bonds (8.05%) for anything beyond. IDFC / Ujjivan Small Finance FDs offer 8%+ but keep each below ₹5L (DICGC insurance limit).</div>`});
   }
-
-  // ── DEBT MUTUAL FUNDS ────────────────────────────────────────────────
   const debtAmt=Math.round(investable*(alloc.debt_mf/100));
   if(debtAmt>0){
-    const debtCards=
-      wiCard('HDFC Low Duration Fund','Debt MF · Low Duration','#a78bfa',
-        '<b>~7.5% p.a.</b> · No lock-in<br>Better than savings account<br>More tax-efficient than FD','Groww / Kuvera',true,'Park money here instead of savings account. Withdrawable in 1–2 business days. Better post-tax returns than FD for 30% bracket.')+
-      wiCard('Aditya Birla SL Money Manager','Money Market Fund','#a78bfa',
-        '<b>~7.3% p.a.</b> · No lock-in<br>Very low risk · High liquidity<br>For short-term parking','Groww / Zerodha Coin',false,'Effectively a liquid FD. Near-zero risk. Suitable for your 3–6 month buffer beyond emergency fund.')+
-      wiCard('ICICI Pru Short Term Fund','Short Duration Debt MF','#a78bfa',
-        '<b>~7.8% p.a.</b> · 1–3 yr horizon<br>Moderate interest rate risk','Zerodha Coin / Kuvera',false,'Better returns than low-duration with slightly more risk. Good for a 2–3 year financial goal like a car or vacation.')+
-      wiCard('Nippon India Gilt Fund','Gilt Fund (Govt.)','#a78bfa',
-        '<b>~8–10% p.a.</b> (variable)<br>Zero credit risk · Rate sensitive<br>3+ year horizon recommended','Zerodha Coin',false,'Invests only in RBI government securities. Zero default risk. Returns vary with interest rate cycles — best when rates fall.');
-    buckets.push({
-      id:'debt', color:'#a78bfa', title:'Debt Mutual Funds', sub:'Low Duration · Money Market · Short Term · Gilt',
-      amt:debtAmt, pct:alloc.debt_mf,
-      body:`
-        <div class="wi-split">SIP <strong>${f(debtAmt)}/month</strong> into debt funds. These sit between FDs (rigid) and equity (volatile) — liquid, tax-efficient, and better returns than savings accounts.</div>
-        <div class="wi-section-title">Debt fund options</div>
-        <div class="wi-cards">${debtCards}</div>
-        <div class="wi-why"><b>Why not just FD?</b> Debt MFs are more tax-efficient than FDs for people in the 20–30% tax bracket — FD interest is taxed as income every year, while debt MF gains are taxed only on withdrawal. Also fully liquid with no premature withdrawal penalty.</div>
-      `
-    });
+    const debtCards=wCard('HDFC Low Duration Fund','Low Duration MF','#f3e8ff','#5b21b6','<b>~7.5% p.a.</b> · No lock-in<br>Better than savings account<br>Withdrawable in 1–2 days','Groww / Kuvera',true,'Park money here instead of savings account. Better post-tax than FD for 30% bracket.')+wCard('Aditya Birla Money Manager','Money Market','#f3e8ff','#5b21b6','<b>~7.3% p.a.</b> · No lock-in<br>Near-zero risk · High liquidity','Groww / Zerodha Coin',false,'Effectively a liquid FD. Near-zero risk. For 3–6 month buffer.')+wCard('ICICI Pru Short Term Fund','Short Duration','#f3e8ff','#5b21b6','<b>~7.8% p.a.</b> · 1–3 yr horizon','Zerodha Coin / Kuvera',false,'Better returns for 2–3 year goals.')+wCard('Nippon India Gilt Fund','Gilt · Govt.','#f3e8ff','#5b21b6','<b>~8–10% p.a.</b> variable<br>Zero credit risk · Rate sensitive','Zerodha Coin',false,'Only RBI govt. securities. Best when interest rates fall.');
+    buckets.push({id:'debt',color:'#7c3aed',title:'Debt Mutual Funds',sub:'Low Duration · Money Market · Short Term · Gilt',amt:debtAmt,pct:alloc.debt_mf,body:`<div class="wi-split-note">SIP <strong>${f(debtAmt)}/month</strong> — liquid, tax-efficient, better returns than savings accounts.</div><div class="wi-section-hd">Debt fund options</div><div class="wi-cards">${debtCards}</div><div class="wi-why"><b>Why not just FD?</b> Debt MFs are more tax-efficient for 20–30% bracket — FD interest taxed yearly, MF gains taxed only on withdrawal. Fully liquid, no premature penalty.</div>`});
   }
-
-  // ── HEALTH INSURANCE ─────────────────────────────────────────────────
   const hiAmt=Math.round(investable*(alloc.health_insurance/100));
   if(hiAmt>0){
-    const hiCards=
-      wiCard('Niva Bupa ReAssure 2.0','Health Insurance','#f472b6',
-        '<b>Unlimited restore</b> benefit<br>No room rent capping<br>Cashless at 8,500+ hospitals','Policybazaar / Niva Bupa App',true,'Best all-round health plan in India right now. Unlimited claim restoration means one hospitalisation doesn\'t wipe your cover.')+
-      wiCard('Star Health Comprehensive','Health Insurance','#f472b6',
-        '<b>Wide hospital network</b><br>OPD cover available<br>No pre-auth required at network hospitals','Policybazaar / Star Health',false,'Strong for families with children. Covers OPD consultations. Good claim settlement ratio (~90%).')+
-      wiCard('HDFC ERGO Optima Secure','Health Insurance','#f472b6',
-        '<b>4x cover on Day 1</b><br>No sub-limits on room rent<br>Good for metro cities','Policybazaar / HDFC ERGO',false,'Doubles your cover to 4x from day one. Excellent for metro residents where hospital costs are very high.')+
-      wiCard('NPS Tier-1 (Additional 80CCD)','Pension + Tax Save','#f472b6',
-        '<b>Extra Rs 50,000</b> deduction (80CCD1B)<br>~10–12% returns (equity tier)<br>Locked till 60','NPS Trust / HDFC Pension',false,'Beyond your Rs 1.5L 80C limit, NPS gives Rs 50,000 more deduction. Invest in equity tier for best returns. Locked till retirement — perfect for this bucket.');
-    buckets.push({
-      id:'hi', color:'#f472b6', title:'Health Insurance & NPS', sub:'Medical Cover · Pension · Tax Benefits',
-      amt:hiAmt, pct:alloc.health_insurance,
-      body:`
-        <div class="wi-split">Spend <strong>${f(hiAmt)}/month</strong> here. Priority 1: Buy adequate health cover (min Rs 10L for individuals, Rs 25L for families). Priority 2: Route any remaining amount into NPS for an extra Rs 50K tax deduction.</div>
-        <div class="wi-section-title">Health & protection products</div>
-        <div class="wi-cards">${hiCards}</div>
-        <div class="wi-why"><b>Rule of thumb</b>Health cover = at least 50% of your annual income. One serious illness without insurance can wipe out years of savings. Buy term life insurance separately — Rs 1 crore cover costs roughly Rs 600–800/month in your 20s and 30s. Check LIC Tech Term, HDFC Click 2 Protect, or ICICI iProtect Smart.</div>
-      `
-    });
+    const hiCards=wCard('Niva Bupa ReAssure 2.0','Health Insurance','#fce7f3','#9d174d','<b>Unlimited restore</b> · No room rent cap<br>8,500+ cashless hospitals','Policybazaar / Niva Bupa',true,'Best all-round health plan. Unlimited claim restoration — one illness won\'t wipe your cover.')+wCard('Star Health Comprehensive','Health Insurance','#fce7f3','#9d174d','<b>Wide network</b> · OPD cover<br>~90% claim settlement ratio','Policybazaar / Star Health',false,'Strong for families. Covers OPD consultations.')+wCard('HDFC ERGO Optima Secure','Health Insurance','#fce7f3','#9d174d','<b>4x cover on Day 1</b><br>No room rent sub-limits · Metro-friendly','Policybazaar / HDFC ERGO',false,'Cover doubles to 4x from day one. Great for metro cities.')+wCard('NPS Tier-1 (80CCD)','Pension · Tax Saving','#fce7f3','#9d174d','<b>Extra ₹50,000</b> deduction (80CCD1B)<br>~10–12% returns · Locked till 60','NPS Trust / HDFC Pension',false,'Beyond ₹1.5L 80C, NPS gives ₹50K more deduction. Choose equity tier.');
+    buckets.push({id:'hi',color:'#db2777',title:'Health Insurance & NPS',sub:'Medical Cover · Pension · Tax Benefits',amt:hiAmt,pct:alloc.health_insurance,body:`<div class="wi-split-note">Spend <strong>${f(hiAmt)}/month</strong>. Priority 1: health cover min ₹10L individual / ₹25L family. Priority 2: NPS for extra ₹50K tax deduction.</div><div class="wi-section-hd">Health & protection products</div><div class="wi-cards">${hiCards}</div><div class="wi-why"><b>Rule of thumb</b>Health cover = at least 50% of annual income. One serious illness without insurance can wipe years of savings. Also buy term life separately — ₹1 Cr cover costs ~₹600–₹800/month in your 20s and 30s.</div>`});
   }
+  const disclaimer=`<div class="wi-disclaimer">⚠ <strong>Disclaimer:</strong> Product recommendations are for informational purposes only based on publicly available data (Feb 2026). FinCA is not a SEBI-registered investment advisor. Past returns are not guaranteed. Verify current rates, NAVs, and terms before investing. Consult a certified CFP/RIA for personalised advice.</div>`;
+  document.getElementById('r-where').innerHTML=disclaimer+buckets.map(b=>`<div class="wi-bucket"><div class="wi-hd" onclick="wiToggle('${b.id}')"><div class="wi-hd-left"><div class="wi-color-bar" style="background:${b.color}"></div><div><div class="wi-hd-title">${b.title}</div><div class="wi-hd-sub">${b.sub}</div></div></div><div class="wi-hd-right"><div class="wi-amt">${f(b.amt)}<span style="font-size:.68rem;font-weight:400;color:var(--text-dim)">/mo</span></div><div class="wi-badge">${b.pct}%</div><div class="wi-chev" id="wc-${b.id}">▼</div></div></div><div class="wi-body" id="wb-${b.id}">${b.body}</div></div>`).join('');
+  setTimeout(()=>wiToggle('eq'),100);
+}
 
-  // ── RENDER ─────────────────────────────────────────────────────────
-  const disclaimer=`<div class="wi-disclaimer"><b>Disclaimer:</b> These are commonly used products for informational purposes only. FinCA is not a SEBI-registered advisor. Past returns are not guaranteed. Verify current rates, terms, and NAVs before investing. Consult a certified financial advisor (CFP/RIA) for personalised advice.</div>`;
+// ── AUTH FUNCTIONS ────────────────────────────────────────────────────
+function updateNavAuth(user){
+  const el=document.getElementById('nav-auth');
+  if(user){
+    const init=(user.displayName||user.email||'U')[0].toUpperCase();
+    const photo=user.photoURL?`<img src="${user.photoURL}" alt="">`:`${init}`;
+    el.innerHTML=`<div class="nav-user-info"><div class="nav-avatar">${photo}</div><span style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.75rem;font-weight:600">${user.displayName||user.email.split('@')[0]}</span></div><button class="btn-sm btn-ghost-sm" onclick="openHistory()">History</button><button class="btn-sm btn-danger-sm" onclick="doLogout()">Sign Out</button>`;
+  } else {
+    el.innerHTML=`<button class="btn-sm btn-primary-sm" onclick="goTo('auth')">Sign In</button>`;
+  }
+}
+function switchAuthTab(tab,el){document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById('auth-'+tab).classList.add('active');['login-error','signup-error'].forEach(id=>document.getElementById(id).classList.remove('show'));}
+function showAuthError(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show');}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();const pass=document.getElementById('login-pass').value;
+  if(!email||!pass){showAuthError('login-error','Please enter email and password.');return;}
+  try{await window._signInWithEmailAndPassword(window._auth,email,pass);showToast('Welcome back!');goTo('landing');}
+  catch(e){const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/invalid-email':'Enter a valid email.','auth/too-many-requests':'Too many attempts. Try later.'};showAuthError('login-error',m[e.code]||'Sign in failed.');}
+}
+async function doSignup(){
+  const name=document.getElementById('signup-name').value.trim();const email=document.getElementById('signup-email').value.trim();const pass=document.getElementById('signup-pass').value;
+  if(!name){showAuthError('signup-error','Please enter your name.');return;}
+  if(!email||!pass){showAuthError('signup-error','Please fill all fields.');return;}
+  if(pass.length<6){showAuthError('signup-error','Password must be at least 6 characters.');return;}
+  try{const cred=await window._createUserWithEmailAndPassword(window._auth,email,pass);await window._setDoc(window._doc(window._db,'users',cred.user.uid),{name,email,createdAt:new Date().toISOString()});showToast('Account created! Welcome to FinCA 🎉');goTo('landing');}
+  catch(e){const m={'auth/email-already-in-use':'Account with this email already exists.','auth/invalid-email':'Enter a valid email.','auth/weak-password':'Password is too weak.'};showAuthError('signup-error',m[e.code]||'Sign up failed.');}
+}
+async function doGoogleLogin(){try{await window._signInWithPopup(window._auth,window._provider);showToast('Signed in with Google!');goTo('landing');}catch(e){if(e.code!=='auth/popup-closed-by-user'){showAuthError('login-error','Google sign-in failed.');showAuthError('signup-error','Google sign-in failed.');}}}
+async function doLogout(){await window._signOut(window._auth);window._currentUser=null;showToast('Signed out');goTo('landing');}
 
-  const html=disclaimer+buckets.map(b=>`
-    <div class="wi-bucket">
-      <div class="wi-bucket-hd" onclick="wiToggle('${b.id}')">
-        <div class="wi-hd-left">
-          <div class="wi-dot" style="background:${b.color}"></div>
-          <div><div class="wi-hd-title">${b.title}</div><div class="wi-hd-sub">${b.sub}</div></div>
-        </div>
-        <div class="wi-hd-right">
-          <div class="wi-amt">${f(b.amt)}<span style="font-size:.65rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
-          <div class="wi-pct-badge">${b.pct}%</div>
-          <div class="wi-chevron" id="wi-chev-${b.id}">▼</div>
-        </div>
-      </div>
-      <div class="wi-body" id="wi-body-${b.id}">${b.body}</div>
-    </div>
-  `).join('');
+async function saveReport(data){
+  if(!window._currentUser)return;
+  try{await window._addDoc(window._collection(window._db,'reports'),{uid:window._currentUser.uid,...data,savedAt:new Date().toISOString()});const t=document.getElementById('save-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+  catch(e){console.error('Save failed:',e);}
+}
 
-  document.getElementById('r-where').innerHTML=html;
-
-  // Auto-open first bucket
-  wiToggle('eq');
+async function openHistory(){
+  if(!window._currentUser){goTo('auth');return;}
+  document.getElementById('history-modal').classList.add('open');
+  const list=document.getElementById('history-list');list.innerHTML='<div class="hist-empty">Loading your reports...</div>';
+  try{
+    const q=window._query(window._collection(window._db,'reports'),window._where('uid','==',window._currentUser.uid),window._orderBy('savedAt','desc'),window._limit(10));
+    const snap=await window._getDocs(q);
+    if(snap.empty){list.innerHTML='<div class="hist-empty">No saved reports yet.<br>Generate a report and it saves automatically.</div>';return;}
+    list.innerHTML=snap.docs.map(d=>{const r=d.data();const date=new Date(r.savedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});return`<div class="hist-item" onclick="loadReport(${JSON.stringify(r).replace(/"/g,'&quot;')})"><div class="hist-date">${date}</div><div class="hist-name">${r.name||'Report'}</div><div class="hist-meta">Age ${r.age||'—'} · ${r.risk||'moderate'} risk · ${r.ytr||'—'} yrs to retirement</div><div class="hist-corpus">Likely corpus: ${fmt(r.corpusLikely)}</div></div>`;}).join('');
+  }catch(e){list.innerHTML='<div class="hist-empty">Could not load history. Please try again.</div>';console.error(e);}
+}
+function closeHistory(){document.getElementById('history-modal').classList.remove('open');}
+function loadReport(r){
+  closeHistory();
+  if(r.name)document.getElementById('f-name').value=r.name;
+  if(r.age)document.getElementById('f-age').value=r.age;
+  if(r.income)document.getElementById('f-income').value=r.income;
+  if(r.goal)document.getElementById('f-goal').value=r.goal;
+  if(r.savings)document.getElementById('f-savings').value=r.savings;
+  if(r.growth)document.getElementById('f-growth').value=r.growth;
+  if(r.rent)document.getElementById('f-rent').value=r.rent;
+  if(r.emi)document.getElementById('f-emi').value=r.emi;
+  if(r.groceries)document.getElementById('f-groceries').value=r.groceries;
+  if(r.utilities)document.getElementById('f-utilities').value=r.utilities;
+  if(r.deps)document.getElementById('f-deps').value=r.deps;
+  if(r.lifestyle)document.getElementById('f-lifestyle').value=r.lifestyle;
+  showToast('Report loaded — click Generate to recalculate');
+  goTo('profile');
 }
 
 function resetAll(){selRisk='moderate';selHealth='no';loanCount=0;document.getElementById('loans-container').innerHTML='';document.getElementById('surplus-preview').style.display='none';}
