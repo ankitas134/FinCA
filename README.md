@@ -4,7 +4,7 @@
 
 FinCA is a free, browser-based personal investment advisor built specifically for India. It uses 10 years of real Indian market data — Nifty 50, gold, RBI inflation, AMFI mutual funds — to generate a personalised investment plan based on your actual income, expenses, and retirement goals.
 
-🔗 **Live Demo:** [ankitas134.github.io/finca](https://your-username.github.io/finca)
+🔗 **Live Demo:** [ankitas134.github.io/finca](https://ankitas134.github.io/finca)
 
 ---
 
@@ -23,7 +23,7 @@ FinCA is a free, browser-based personal investment advisor built specifically fo
 
 ---
 
-## 📊 What FinCA Analyses
+##  What FinCA Analyses
 
 | Factor | Detail |
 |---|---|
@@ -61,7 +61,7 @@ No npm, no bundler, no setup needed.
 
 ---
 
-## 🗂 Project Structure
+##  Project Structure
 
 ```
 finca/
