@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinCA — Connected</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="save-toast" id="save-toast">✓ Report saved locally</div>
+<div class="modal-overlay" id="history-modal" onclick="if(event.target===this)closeHistory()">
+  <div class="modal-box">
+    <div class="modal-hd"><div class="modal-title">Report History</div><button class="modal-close" onclick="closeHistory()">✕</button></div>
+    <div id="history-list"><div class="hist-empty">Loading...</div></div>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-logo" onclick="goTo('landing')"><div class="nav-logo-badge">F</div>Fin<em>CA</em></div>
+  <div class="nav-sep"></div>
+  <div class="nav-steps">
+    <div class="nav-step" id="step-1"><span class="sn">1</span>Profile</div>
+    <div class="nav-step" id="step-2"><span class="sn">2</span>Expenses</div>
+    <div class="nav-step" id="step-3"><span class="sn">3</span>Loans</div>
+    <div class="nav-step" id="step-4"><span class="sn">4</span>Report</div>
+  </div>
+  <div class="nav-right">
+    <div class="theme-switcher">
+      <button class="theme-btn theme-btn-light active" id="tb-light" onclick="setTheme('light',this)" title="Light"></button>
+      <button class="theme-btn theme-btn-navy" id="tb-navy" onclick="setTheme('navy',this)" title="Navy"></button>
+      <button class="theme-btn theme-btn-green" id="tb-green" onclick="setTheme('green',this)" title="Green"></button>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-auth" id="nav-auth"><button class="btn-sm btn-primary-sm" onclick="goTo('auth')">Sign In</button></div>
+  </div>
+</nav>
+
+<!-- LANDING -->
+<div class="page active" id="page-landing">
+  <div class="landing-hero">
+    <div class="landing-inner">
+      <div>
+        <div class="hero-tag"><span class="hero-dot"></span>India's data-driven investment advisor · Data up to May 2025</div>
+        <h1 class="hero-title">Know exactly where<br>your money <em>should go.</em></h1>
+        <p class="hero-desc">FinCA uses 10 years of real Indian market data — Nifty 50, gold, RBI inflation, AMFI mutual funds — to build a personalised investment plan based on your actual income, expenses, and goals.</p>
+        <div class="hero-cta">
+          <button class="btn-cta btn-cta-primary" onclick="goTo('profile')">Get My Free Plan →</button>
+          <button class="btn-cta btn-cta-secondary" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works ↓</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-title">Sample Report Preview</div>
+        <div class="hero-stat-row"><span class="hsr-label">Monthly SIP</span><span class="hsr-val primary">₹22,960</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Years to Retirement</span><span class="hsr-val">34 years</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Portfolio Return (est.)</span><span class="hsr-val green">13.68% p.a.</span></div>
+        <div class="hero-stat-row"><span class="hsr-label">Goal Status</span><span class="hsr-val green">✓ On Track</span></div>
+        <div class="hero-corpus">
+          <div class="hero-corpus-label">Projected Retirement Corpus</div>
+          <div class="hero-corpus-val">₹2.06 Cr</div>
+          <div class="hero-corpus-sub">50th percentile · 800 simulations · ±18% accuracy range</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">10Y</div><div class="stat-label">Historical Market Data</div></div>
+    <div class="stat-card"><div class="stat-num">800</div><div class="stat-label">Monte Carlo Simulations</div></div>
+    <div class="stat-card"><div class="stat-num">5</div><div class="stat-label">Asset Classes Covered</div></div>
+    <div class="stat-card"><div class="stat-num">±18%</div><div class="stat-label">Projection Accuracy Range</div></div>
+  </div>
+
+  <!-- HOW IT WORKS (NEW) -->
+  <div class="how-section" id="how-it-works">
+    <div class="section-title">How FinCA calculates your plan</div>
+    <div class="section-sub">Four steps — all running in your browser, using real Indian market data.</div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div class="how-title">Real surplus calculation</div>
+        <div class="how-desc">Your actual investable amount = Income − all real expenses − 20% liquid buffer. No flat percentages assumed.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div class="how-title">Risk profiling</div>
+        <div class="how-desc">A K-Means ML model (trained on 48 investor profiles) clusters you into Conservative, Moderate, or Aggressive based on age, surplus ratio, and dependents.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div class="how-title">Corpus projection</div>
+        <div class="how-desc">800 Monte Carlo simulations use ±4.7% monthly variance (real Nifty data, 108 months) to give worst/likely/best case outcomes.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div class="how-title">Personalised recommendations</div>
+        <div class="how-desc">Specific fund names, ETFs, stocks, SGBs, FDs ranked by suitability. Gemini AI checks your health insurance fit.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCURACY SECTION (NEW) -->
+  <div class="accuracy-section">
+    <div class="accuracy-card">
+      <div class="accuracy-header">
+        <div class="accuracy-icon">📐</div>
+        <div>
+          <div class="accuracy-title">How accurate are these results?</div>
+          <div class="accuracy-sub">Honest disclosure about what the numbers mean — and don't mean</div>
+        </div>
+      </div>
+      <div class="accuracy-grid">
+        <div class="acc-stat"><div class="acc-stat-num">±18%</div><div class="acc-stat-label">Typical 30-year projection range at 50th percentile</div></div>
+        <div class="acc-stat"><div class="acc-stat-num">108</div><div class="acc-stat-label">Months of real Nifty data used for volatility (2016–2024)</div></div>
+        <div class="acc-stat"><div class="acc-stat-num">10Y</div><div class="acc-stat-label">Historical average period for all return estimates</div></div>
+      </div>
+      <div class="accuracy-body">
+        <b>What FinCA gets right:</b> The relative allocation (more equity when young, more FD near retirement), surplus calculation, tax regime impact, and emergency fund check are all mathematically sound and based on real data.<br><br>
+        <b>What FinCA cannot predict:</b> Exact future returns. The Nifty has returned 20.65% CAGR over the last 10 years — but this includes exceptional bull runs. Conservative planning typically assumes 12–14% for equity. A 30-year projection with ±4.7% monthly variance means your actual corpus could be 18–25% above or below the "likely" figure.<br><br>
+        <b>The Monte Carlo simulations</b> run 800 scenarios with randomised monthly returns drawn from a normal distribution centred on the weighted portfolio return, with standard deviation derived from 108 months of real Nifty 50 monthly closing prices (Jan 2016–Dec 2024). The 10th percentile = worst case, 50th = likely, 90th = best case.<br><br>
+        <b>Data is as of May 2025.</b> Recalculate every 6–12 months as market conditions change.
+      </div>
+    </div>
+  </div>
+
+  <div class="features-section" id="features">
+    <div class="section-title">What FinCA analyses for you</div>
+    <div class="section-sub">Six factors that most investment apps ignore — all calculated from your real numbers.</div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">💰</div><div class="feature-title">Real surplus calculation</div><div class="feature-desc">Calculates your actual investable amount after rent, EMIs, groceries, dependents and lifestyle — not a flat 20% assumption.</div></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Monte Carlo engine</div><div class="feature-desc">Runs 800 market simulations showing worst, likely, and best case retirement outcomes based on real Nifty 50 volatility (±4.7% monthly).</div></div>
+      <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Income growth model</div><div class="feature-desc">Projects your corpus as salary increases each year — not a static SIP assumption for the next 35 years.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Loan detection</div><div class="feature-desc">Flags high-interest loans above 12% and removes that EMI burden before computing your investable amount.</div></div>
+      <div class="feature-card"><div class="feature-icon">🏥</div><div class="feature-title">AI Health Insurance Advisor</div><div class="feature-desc">Gemini AI analyses your age, city, family, and conditions to recommend the exact health insurance plans right for you.</div></div>
+      <div class="feature-card"><div class="feature-icon">🧾</div><div class="feature-title">Tax optimisation</div><div class="feature-desc">Detects your tax bracket and regime (old vs new), then shows exactly how much you save through ELSS and NPS.</div></div>
+    </div>
+  </div>
+
+  <!-- DATA SOURCES ON LANDING (NEW) -->
+  <div class="sources-section">
+    <div class="section-title">Data sources</div>
+    <div class="section-sub">All market data is sourced from official Indian government and regulatory bodies. No third-party estimates.</div>
+    <div class="sources-grid">
+      <a class="source-card" href="https://www.nseindia.com" target="_blank" rel="noopener">
+        <div class="source-icon">📈</div>
+        <div class="source-name">NSE India</div>
+        <div class="source-desc">Nifty 50 historical closing prices</div>
+        <div class="source-metric">12.04% CAGR (9Y avg)</div>
+      </a>
+      <a class="source-card" href="https://www.mcxindia.com" target="_blank" rel="noopener">
+        <div class="source-icon">🥇</div>
+        <div class="source-name">MCX India</div>
+        <div class="source-desc">Gold price per 10g (INR), 10-year average</div>
+        <div class="source-metric">12.03% CAGR (9Y avg)</div>
+      </a>
+      <a class="source-card" href="https://www.rbi.org.in" target="_blank" rel="noopener">
+        <div class="source-icon">🏛️</div>
+        <div class="source-name">RBI</div>
+        <div class="source-desc">CPI inflation data + FD benchmark rate</div>
+        <div class="source-metric">5.0% avg inflation</div>
+      </a>
+      <a class="source-card" href="https://www.amfiindia.com" target="_blank" rel="noopener">
+        <div class="source-icon">📋</div>
+        <div class="source-name">AMFI India</div>
+        <div class="source-desc">Mutual fund category returns, NAV history</div>
+        <div class="source-metric">7.5% debt MF avg</div>
+      </a>
+      <a class="source-card" href="https://www.irdai.gov.in" target="_blank" rel="noopener">
+        <div class="source-icon">🏥</div>
+        <div class="source-name">IRDAI</div>
+        <div class="source-desc">Insurance claim settlement ratios</div>
+        <div class="source-metric">Health plan ratings</div>
+      </a>
+    </div>
+    <div style="margin-top:16px;font-size:.75rem;color:var(--text-dim);line-height:1.7;padding:14px;background:var(--surface);border:var(--card-border);border-radius:10px;">
+      ⚠️ <b style="color:var(--text)">Disclaimer:</b> FinCA is not a SEBI-registered investment advisor. All projections are based on historical data and are for informational purposes only. Past returns do not guarantee future performance. Always consult a certified financial planner (CFP) before making major investment decisions. Data as of May 2025.
+    </div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="page" id="page-auth">
+  <div class="auth-layout">
+    <div class="auth-header"><div class="auth-logo-big">Fin<em>CA</em></div><p class="auth-tagline">Sign in to save reports and track your progress</p></div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('signup',this)">Create Account</button>
+      </div>
+      <div class="auth-panel active" id="auth-login">
+        <div class="field"><label class="field-label">Email</label><input type="email" id="login-email" placeholder="you@email.com"></div>
+        <div class="field"><label class="field-label">Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="auth-error" id="login-error"></div>
+        <button class="btn-full btn-full-primary" onclick="doLogin()">Sign In →</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doGoogleLogin()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      </div>
+      <div class="auth-panel" id="auth-signup">
+        <div class="field"><label class="field-label">Full Name</label><input type="text" id="signup-name" placeholder="Ankita S"></div>
+        <div class="field"><label class="field-label">Email</label><input type="email" id="signup-email" placeholder="you@email.com"></div>
+        <div class="field"><label class="field-label">Password</label><input type="password" id="signup-pass" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+        <div class="auth-error" id="signup-error"></div>
+        <button class="btn-full btn-full-primary" onclick="doSignup()">Create Account →</button>
+        <div class="auth-divider">or</div>
+        <button class="btn-google" onclick="doGoogleLogin()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>
+      </div>
+    </div>
+    <div class="auth-footer"><a onclick="goTo('landing')">← Skip for now, continue without account</a></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="page-profile">
+<div class="form-layout">
+  <div class="form-progress"><div class="progress-steps">
+    <div class="ps-item active"><div class="ps-circle">1</div><div class="ps-label">Profile</div></div>
+    <div class="ps-item"><div class="ps-circle">2</div><div class="ps-label">Expenses</div></div>
+    <div class="ps-item"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+  </div></div>
+  <div class="form-header">
+    <div class="form-step-tag">Step 1 of 3</div>
+    <h2 class="form-title">Your profile</h2>
+    <p class="form-sub">Basic details to personalise your investment plan. All calculations run in your browser — nothing is sent anywhere.</p>
+  </div>
+  <div class="field-grid">
+    <div class="field" id="fg-name" style="grid-column:1/-1">
+      <label class="field-label">Full Name</label>
+      <input type="text" id="f-name" placeholder="e.g. Ankita S" oninput="validateName(this)">
+      <div class="field-hint">Letters and spaces only</div>
+      <div class="field-error">Please enter a valid name — letters only, no numbers</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Your Age <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box tip-right">Used to calculate years until retirement (age 60). Younger age = more time = higher risk tolerance recommended by the model.</div></span></label>
+      <input type="number" id="f-age" placeholder="e.g. 28" min="18" max="59" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Monthly Income (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box tip-right">Your in-hand (take-home) salary per month. Do not include bonuses or one-time payments — use your regular monthly amount.</div></span></label>
+      <input type="number" id="f-income" placeholder="e.g. 75000" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Retirement Goal (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">The total corpus you want at age 60. Quick rule: 25× your annual expenses. E.g. ₹6L/year spend → target ₹1.5 Cr.</div></span></label>
+      <input type="number" id="f-goal" placeholder="e.g. 10000000" onblur="stripLeadingZero(this)">
+      <div class="field-hint">Total corpus target at age 60</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Existing Savings (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Cash in your bank, FDs, or liquid investments you already have right now. Used to check your emergency fund status.</div></span></label>
+      <input type="number" id="f-savings" placeholder="e.g. 100000" value="0" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field" style="grid-column:1/-1">
+      <label class="field-label">Expected Income Growth % / Year <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Your average annual salary hike. Most Indian professionals get 8–12%. This models how your SIP amount grows each year.</div></span></label>
+      <input type="number" id="f-growth" placeholder="e.g. 8" value="8" onblur="stripLeadingZero(this)">
+    </div>
+  </div>
+  <div class="field">
+    <label class="field-label">Tax Regime <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Old Regime: claim 80C, HRA, NPS deductions. New Regime: lower slab rates but NO deductions. Default since 2023 is New Regime.</div></span></label>
+    <div class="regime-toggle">
+      <button class="regime-btn" id="regime-old" onclick="setRegime('old',this)">Old Regime (with 80C)</button>
+      <button class="regime-btn active" id="regime-new" onclick="setRegime('new',this)">New Regime (default 2023+)</button>
+    </div>
+    <div class="regime-note" id="regime-note">📌 <b>New Regime (default after 2023):</b> Lower tax slabs but you cannot claim 80C/ELSS/HRA deductions. Good if your total deductions are less than ₹3.75L/year.</div>
+  </div>
+  <div class="field" style="margin-top:4px;">
+    <label class="field-label">Risk Appetite <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box tip-right">How okay are you if your portfolio drops 20–40% in a crash year? Aggressive: fine, stay invested. Moderate: some concern. Conservative: want stability over growth.</div></span></label>
+    <div class="radio-grid">
+      <label class="radio-card" onclick="selectRadio('risk','aggressive',this)"><input type="radio" name="risk" value="aggressive"><div class="rc-title">Aggressive 🔥</div><div class="rc-desc">High equity, comfortable with big market swings. 7+ year horizon.</div></label>
+      <label class="radio-card selected" onclick="selectRadio('risk','moderate',this)"><input type="radio" name="risk" value="moderate" checked><div class="rc-title">Moderate ⚖️</div><div class="rc-desc">Balanced mix of growth and safety. Most common choice.</div></label>
+      <label class="radio-card" onclick="selectRadio('risk','conservative',this)"><input type="radio" name="risk" value="conservative"><div class="rc-title">Conservative 🛡️</div><div class="rc-desc">Capital protection priority. Prefer FDs and debt funds.</div></label>
+    </div>
+  </div>
+  <div class="field" style="margin-top:16px;">
+    <label class="field-label">Major Health Condition? <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Diabetes, heart disease, or other chronic conditions? This raises your health insurance allocation priority in the plan.</div></span></label>
+    <div class="radio-grid" style="grid-template-columns:1fr 1fr;">
+      <label class="radio-card selected" onclick="selectRadio('health','no',this)"><input type="radio" name="health" value="no" checked><div class="rc-title">No</div><div class="rc-desc">Standard allocation</div></label>
+      <label class="radio-card" onclick="selectRadio('health','yes',this)"><input type="radio" name="health" value="yes"><div class="rc-title">Yes</div><div class="rc-desc">Higher health insurance priority</div></label>
+    </div>
+  </div>
+  <div class="form-nav">
+    <button class="btn-back" onclick="goTo('landing')">← Back</button>
+    <button class="btn-next" onclick="goToExpenses()">Next: Expenses →</button>
+  </div>
+</div>
+</div>
+
+<!-- EXPENSES -->
+<div class="page" id="page-expenses">
+<div class="form-layout">
+  <div class="form-progress"><div class="progress-steps">
+    <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Profile</div></div>
+    <div class="ps-item active"><div class="ps-circle">2</div><div class="ps-label">Expenses</div></div>
+    <div class="ps-item"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+  </div></div>
+  <div class="form-header">
+    <div class="form-step-tag">Step 2 of 3</div>
+    <h2 class="form-title">Monthly expenses</h2>
+    <p class="form-sub">Your real surplus — not an assumed percentage — powers FinCA's recommendations. Be honest for the most accurate plan.</p>
+  </div>
+  <div class="field-grid">
+    <div class="field">
+      <label class="field-label">Rent or Home EMI (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Monthly rent or home loan EMI. Enter 0 if you live with family rent-free.</div></span></label>
+      <input type="number" id="f-rent" placeholder="e.g. 15000" value="0" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Other EMIs (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Car, personal, education loan EMIs combined. High-interest loans above 12% will be flagged separately.</div></span></label>
+      <input type="number" id="f-emi" placeholder="0" value="0" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+      <div class="field-hint">Car, education, personal loan. Enter 0 if none.</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Groceries & Food (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Monthly spend on groceries, home cooking, and eating out. Include Swiggy/Zomato orders — be realistic.</div></span></label>
+      <input type="number" id="f-groceries" placeholder="e.g. 8000" value="0" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Bills, Transport, Phone (₹) <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Electricity, internet, mobile recharge, Ola/Uber, fuel, Netflix, Spotify — everything you pay monthly.</div></span></label>
+      <input type="number" id="f-utilities" placeholder="e.g. 3000" value="0" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Number of Dependents <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Anyone you financially support — children, parents, siblings. FinCA assumes ₹6,000/month per dependent for basic needs.</div></span></label>
+      <input type="number" id="f-deps" placeholder="0" value="0" min="0" oninput="updateSurplus()" onblur="stripLeadingZero(this)">
+    </div>
+    <div class="field">
+      <label class="field-label">Lifestyle <span class="tip-wrap"><i class="tip-icon">i</i><div class="tip-box">Frugal = home meals, no holidays, public transport (5% of income). Average = dining out, yearly trips (10%). Lavish = frequent travel, premium (20%).</div></span></label>
+      <select id="f-lifestyle" onchange="updateSurplus()">
+        <option value="frugal">Frugal — spend lean (5% of income)</option>
+        <option value="average" selected>Average — comfortable (10% of income)</option>
+        <option value="lavish">Lavish — premium (20% of income)</option>
+      </select>
+    </div>
+  </div>
+  <div class="surplus-box" id="surplus-preview">
+    <div class="surplus-row"><span class="sr-label">Monthly Income</span><span class="sr-val" id="sp-income" style="color:var(--green)">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Total Expenses</span><span class="sr-val" id="sp-expenses" style="color:var(--red)">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Monthly Surplus</span><span class="sr-val" id="sp-surplus">—</span></div>
+    <div class="surplus-row"><span class="sr-label">Liquid Buffer (20%)</span><span class="sr-val" id="sp-buffer" style="color:var(--gold)">—</span></div>
+    <div class="surplus-row"><span class="sr-label" style="font-weight:700;color:var(--text)">Monthly SIP Amount</span><span class="sr-val" id="sp-sip" style="color:var(--green);font-size:1rem">—</span></div>
+  </div>
+  <div class="form-nav">
+    <button class="btn-back" onclick="goTo('profile')">← Back</button>
+    <button class="btn-next" onclick="goTo('loans')">Next: Loans →</button>
+  </div>
+</div>
+</div>
+
+<!-- LOANS -->
+<div class="page" id="page-loans">
+<div class="form-layout">
+  <div class="form-progress"><div class="progress-steps">
+    <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Profile</div></div>
+    <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Expenses</div></div>
+    <div class="ps-item active"><div class="ps-circle">3</div><div class="ps-label">Loans</div></div>
+  </div></div>
+  <div class="form-header">
+    <div class="form-step-tag">Step 3 of 3</div>
+    <h2 class="form-title">Outstanding loans</h2>
+    <p class="form-sub">Loans above 12% interest cost more than most investments return. FinCA prioritises clearing these before investing your surplus.</p>
+  </div>
+  <div id="loans-container"></div>
+  <button class="btn-add-loan" onclick="addLoan()">+ Add a loan</button>
+  <div class="no-loans-box"><div class="nlb-title">No loans?</div><div class="nlb-body">Leave this empty and click Generate Report to proceed.</div></div>
+  <div style="margin-top:28px;">
+    <div class="risk-consent">
+      <input type="checkbox" id="risk-consent-cb" onchange="document.getElementById('btn-generate-main').disabled=!this.checked">
+      <label class="risk-consent-label" for="risk-consent-cb">
+        <b>I understand the risks involved in investing.</b> I know that past returns do not guarantee future performance, markets can fall significantly, and FinCA is not a SEBI-registered advisor. Results are based on data up to May 2025. I will consult a certified financial planner before making major investment decisions.
+      </label>
+    </div>
+  </div>
+  <div class="form-nav">
+    <button class="btn-back" onclick="goTo('expenses')">← Back</button>
+    <button class="btn-next btn-generate" id="btn-generate-main" onclick="calculate()" disabled>Generate My Report →</button>
+    <div class="generate-spinner" id="generate-spinner"><div class="spin"></div><span>Running 800 Monte Carlo simulations...</span></div>
+  </div>
+</div>
+</div>
+
+<!-- RESULTS -->
+<div class="page" id="page-results">
+<div class="results-layout">
+  <div class="result-header">
+    <div>
+      <div class="rh-name" id="r-name">FinCA Report</div>
+      <div class="rh-meta" id="r-meta"></div>
+      <div class="data-stamp"><span class="data-stamp-dot"></span>Data as of May 2025 · Recalculate every 6–12 months</div>
+    </div>
+    <div class="health-score-block" id="r-health-score"></div>
+  </div>
+  <div id="r-risk-banner"></div>
+  <div id="r-alerts"></div>
+  <div id="r-ef-card"></div>
+  <div class="kpi-grid" id="r-kpis"></div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('corpus',this)">📊 Corpus</button>
+    <button class="tab-btn" onclick="showTab('allocation',this)">🥧 Allocation</button>
+    <button class="tab-btn" onclick="showTab('breakdown',this)">💸 Breakdown</button>
+    <button class="tab-btn" onclick="showTab('tax',this)">🧾 Tax</button>
+    <button class="tab-btn" onclick="showTab('where',this)">📍 Invest</button>
+    <button class="tab-btn" onclick="showTab('plan',this)">✅ Plan</button>
+    <button class="tab-btn" onclick="showTab('data',this)">🔢 Data</button>
+  </div>
+  <div class="pdf-result-bar"><button class="pdf-btn" onclick="exportPDF()">⬇ Download PDF</button></div>
+  <div class="tab-panel active" id="tab-corpus">
+    <div class="r-card">
+      <div class="r-card-title">Retirement corpus — 800 Monte Carlo simulations</div>
+      <div class="accuracy-badge">📐 Projection accuracy: ±18–25% over 30 years · 10th/50th/90th percentile shown</div>
+      <div class="corpus-section" id="r-bars"></div>
+      <div class="chart-2col">
+        <div class="chart-box"><div class="chart-box-title">Year-by-year corpus growth</div><div class="chart-wrap" style="height:190px"><canvas id="chart-growth"></canvas></div></div>
+        <div class="chart-box"><div class="chart-box-title">Simulation spread (800 runs)</div><div class="chart-wrap" style="height:190px"><canvas id="chart-dist"></canvas></div></div>
+      </div>
+      <div class="milestone-row" id="r-milestones"></div>
+    </div>
+  </div>
+  <div class="tab-panel" id="tab-allocation">
+    <div class="r-card"><div class="r-card-title">Portfolio allocation</div><div class="pie-table-layout"><div class="chart-wrap" style="height:200px"><canvas id="chart-alloc"></canvas></div><div class="alloc-table" id="r-alloc"></div></div></div>
+  </div>
+  <div class="tab-panel" id="tab-breakdown">
+    <div class="r-card"><div class="r-card-title">Monthly income breakdown</div><div class="pie-table-layout"><div class="chart-wrap" style="height:200px"><canvas id="chart-exp"></canvas></div><div id="r-breakdown"></div></div></div>
+  </div>
+  <div class="tab-panel" id="tab-tax">
+    <div class="r-card"><div class="r-card-title" id="tax-card-title">Tax optimisation</div><div class="tax-grid" id="r-tax-kpis"></div><div class="tax-body-text" id="r-tax-body"></div></div>
+  </div>
+  <div class="tab-panel" id="tab-where">
+    <div id="r-where"></div>
+    <div id="r-ai-health"></div>
+  </div>
+  <div class="tab-panel" id="tab-plan"><div class="r-card"><div class="r-card-title">Your personalised action plan</div><div class="action-list" id="r-action"></div></div></div>
+  <div class="tab-panel" id="tab-data">
+    <!-- METHODOLOGY -->
+    <div class="methodology-card">
+      <div class="r-card-title">How your results were calculated</div>
+      <div class="method-step">
+        <div class="method-num">1</div>
+        <div><div class="method-title">Surplus calculation</div><div class="method-desc">Your investable amount = (Income − all expenses − high-interest EMIs) × 80%. The remaining 20% is kept as a liquid buffer.</div><div class="method-formula">investable = (income − expenses − highCostEMI) × 0.80</div></div>
+      </div>
+      <div class="method-step">
+        <div class="method-num">2</div>
+        <div><div class="method-title">Weighted portfolio return</div><div class="method-desc">Each asset class return is weighted by its allocation percentage. Health insurance allocation contributes 0% return (it's a cost).</div><div class="method-formula">WR = (equity% × 12.04%) + (gold% × 12.03%) + (fd% × 6.88%) + (debt% × 7.1%)</div></div>
+      </div>
+      <div class="method-step">
+        <div class="method-num">3</div>
+        <div><div class="method-title">Monte Carlo simulation (FIXED formula)</div><div class="method-desc">800 simulations run with monthly returns = (annual return ÷ 12) + random noise. Noise is drawn from a normal distribution with σ = 0.0468 (real Nifty monthly std dev from 108 months of data). Noise stays at monthly scale — not divided by 12.</div><div class="method-formula">monthly_r = (WR / 12) + Normal(0, 0.0468)</div></div>
+      </div>
+      <div class="method-step">
+        <div class="method-num">4</div>
+        <div><div class="method-title">Percentile outcomes</div><div class="method-desc">All 800 simulated corpus values are sorted. Worst case = 10th percentile (80% of outcomes are better). Likely = 50th percentile (median). Best case = 90th percentile.</div></div>
+      </div>
+      <div class="method-step">
+        <div class="method-num">5</div>
+        <div><div class="method-title">Inflation adjustment</div><div class="method-desc">The likely corpus in today's purchasing power = corpus ÷ (1 + 5%)^years. This tells you what your projected amount is worth in today's money.</div><div class="method-formula">real_value = corpus / (1.05)^years_to_retire</div></div>
+      </div>
+    </div>
+    <!-- DATA SOURCES TAB -->
+    <div class="data-sources-card">
+      <div class="ds-title">Market data used in this report</div>
+      <table class="ds-table">
+        <tr><th>Asset</th><th>Return Used</th><th>Source</th><th>Period</th><th>Official Link</th></tr>
+        <tr><td>Nifty 50 / Equity</td><td><b>12.04% CAGR</b></td><td>NSE Historical Data</td><td>Apr 2016–Mar 2025</td><td><a href="https://www.nseindia.com/market-data/historical-data" target="_blank">nseindia.com ↗</a></td></tr>
+        <tr><td>Gold</td><td><b>12.03% CAGR</b></td><td>MCX India Spot Prices</td><td>Apr 2016–Mar 2025</td><td><a href="https://www.mcxindia.com/market-data/spot-market-price" target="_blank">mcxindia.com ↗</a></td></tr>
+        <tr><td>Fixed Deposits</td><td><b>7.0% p.a.</b></td><td>RBI Benchmark Rate</td><td>Current (2025)</td><td><a href="https://www.rbi.org.in/Scripts/PublicationsView.aspx?id=21765" target="_blank">rbi.org.in ↗</a></td></tr>
+        <tr><td>Debt Mutual Funds</td><td><b>7.5% p.a.</b></td><td>AMFI Category Average</td><td>5Y Rolling 2024</td><td><a href="https://www.amfiindia.com/research-information/mf-data" target="_blank">amfiindia.com ↗</a></td></tr>
+        <tr><td>Inflation (CPI)</td><td><b>5.0% p.a.</b></td><td>RBI CPI Data</td><td>Jan 2015–Dec 2024</td><td><a href="https://www.rbi.org.in/Scripts/PublicationsView.aspx?id=17679" target="_blank">rbi.org.in ↗</a></td></tr>
+        <tr><td>Nifty Volatility</td><td><b>σ = 4.68%/month</b></td><td>NSE Monthly Closing Prices</td><td>108 months (2016–2024)</td><td><a href="https://www.nseindia.com/market-data/historical-data" target="_blank">nseindia.com ↗</a></td></tr>
+      </table>
+      <div class="ds-note">
+        <b>Important limitations:</b> The Nifty 50's 20.65% 10-year CAGR includes exceptional market performance. Conservative planning typically assumes 12–14% for equity long-term. The ±4.7% monthly volatility comes from computing the standard deviation of 108 monthly returns (Jan 2016 – Dec 2024) from NSE closing price data.<br><br>
+        <b>Data as of May 2025.</b> Market returns, FD rates, and inflation change over time. FinCA recommends recalculating your plan every 6–12 months. Insurance claim settlement ratios are sourced from <a href="https://www.irdai.gov.in" target="_blank" style="color:var(--primary);font-weight:600">IRDAI annual reports ↗</a>.
+      </div>
+    </div>
+  </div>
+  <div class="result-actions">
+    <button class="btn-next" onclick="goTo('landing');resetAll()">Start Over</button>
+    <button class="btn-outline" onclick="goTo('profile')">Edit Inputs</button>
+  </div>
+</div>
+</div>
+
+
+<div class="api-error" id="api-error"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
