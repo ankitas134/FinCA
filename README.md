@@ -273,7 +273,7 @@ Ideas for improvement:
 - [ ] Frontend/backend data sync (pull rates from finca_output.json)
 
 ```bash
-git clone https://github.com/your-username/FinCA.git
+git clone https://github.com/ankitas134/FinCA.git
 git checkout -b feat/your-feature
 # make changes
 git commit -m "feat: description"
